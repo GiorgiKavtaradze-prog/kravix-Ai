@@ -32,6 +32,36 @@ create table if not exists public.voice_tts_generations (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.avatar_videos (
+  id uuid primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  script text not null,
+  script_mode text not null default 'manual',
+  script_topic text,
+  script_tone text,
+  avatar_id text not null,
+  avatar_name text not null,
+  avatar_style text,
+  avatar_image_url text,
+  voice_id text not null,
+  voice_type text not null,
+  voice_name text not null,
+  duration_seconds integer not null,
+  screen_ratio text not null,
+  credits_charged integer not null,
+  status text not null default 'queued',
+  trigger_run_id text,
+  domo_task_id text,
+  domo_credits integer,
+  video_url text,
+  video_mime_type text,
+  thumbnail_url text,
+  error_message text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.user_credits (
   user_id uuid primary key references auth.users(id) on delete cascade,
   balance integer not null default 2480,
@@ -69,6 +99,11 @@ create trigger set_voice_tts_generations_updated_at
 before update on public.voice_tts_generations
 for each row execute function public.set_updated_at();
 
+drop trigger if exists set_avatar_videos_updated_at on public.avatar_videos;
+create trigger set_avatar_videos_updated_at
+before update on public.avatar_videos
+for each row execute function public.set_updated_at();
+
 drop trigger if exists set_user_credits_updated_at on public.user_credits;
 create trigger set_user_credits_updated_at
 before update on public.user_credits
@@ -76,11 +111,13 @@ for each row execute function public.set_updated_at();
 
 alter table public.voice_clones enable row level security;
 alter table public.voice_tts_generations enable row level security;
+alter table public.avatar_videos enable row level security;
 alter table public.user_credits enable row level security;
 alter table public.credit_transactions enable row level security;
 
 grant select, insert, update on public.voice_clones to authenticated;
 grant select, insert, update on public.voice_tts_generations to authenticated;
+grant select, insert, update on public.avatar_videos to authenticated;
 grant select, insert, update on public.user_credits to authenticated;
 grant select, insert on public.credit_transactions to authenticated;
 
@@ -92,6 +129,10 @@ begin
 
   if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'voice_tts_generations' and policyname = 'Users manage own voice TTS') then
     create policy "Users manage own voice TTS" on public.voice_tts_generations for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'avatar_videos' and policyname = 'Users manage own avatar videos') then
+    create policy "Users manage own avatar videos" on public.avatar_videos for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
   end if;
 
   if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'user_credits' and policyname = 'Users manage own credits') then

@@ -32,8 +32,23 @@ async function ensureCreditBalance(
     .select("*")
     .single()
 
-  if (insertError || !created) {
-    throw new Error(insertError?.message ?? "Unable to create credit balance.")
+  if (insertError) {
+    // If the insert failed (e.g. unique key violation from concurrent request), try to fetch the credit row again.
+    const { data: retryData, error: retryError } = await client.database
+      .from("user_credits")
+      .select("*")
+      .eq("user_id", userId)
+      .single()
+
+    if (!retryError && retryData) {
+      return retryData as CreditBalance
+    }
+
+    throw new Error(insertError.message ?? "Unable to create credit balance.")
+  }
+
+  if (!created) {
+    throw new Error("Unable to create credit balance.")
   }
 
   return created as CreditBalance
