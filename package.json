@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev . --webpack -H 127.0.0.1",
     "dev:turbo": "next dev . --turbopack -H 127.0.0.1",
+    "trigger:dev": "trigger dev",
+    "trigger:deploy": "trigger deploy",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -13,6 +15,7 @@
     "@base-ui/react": "^1.5.0",
     "@hookform/resolvers": "^5.4.0",
     "@insforge/sdk": "^1.2.10",
+    "@trigger.dev/sdk": "^4.4.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -38,12 +41,14 @@
   "devDependencies": {
     "@insforge/cli": "^0.1.82",
     "@tailwindcss/postcss": "^4",
+    "@trigger.dev/build": "^4.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "trigger.dev": "^4.4.6",
     "typescript": "^5"
   }
 }

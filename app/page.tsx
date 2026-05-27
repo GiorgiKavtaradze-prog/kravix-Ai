@@ -19,6 +19,7 @@ import {
   WandSparklesIcon,
 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 
@@ -58,14 +59,14 @@ type StudioUser = {
 }
 
 const navigationItems = [
-  { label: "Home", icon: HomeIcon, active: true },
-  { label: "AI Video", icon: ClapperboardIcon },
-  { label: "AI Images", icon: ImageIcon },
-  { label: "AI Video Agent", icon: WandSparklesIcon },
-  { label: "AI Voice", icon: Mic2Icon },
-  { label: "AI Avatar", icon: UserRoundIcon },
-  { label: "AI Templates", icon: FilesIcon },
-  { label: "My Library", icon: LibraryIcon },
+  { label: "Home", icon: HomeIcon, href: "/", active: true },
+  { label: "AI Video", icon: ClapperboardIcon, href: "/" },
+  { label: "AI Images", icon: ImageIcon, href: "/ai-images" },
+  { label: "AI Video Agent", icon: WandSparklesIcon, href: "/" },
+  { label: "AI Voice", icon: Mic2Icon, href: "/" },
+  { label: "AI Avatar", icon: UserRoundIcon, href: "/" },
+  { label: "AI Templates", icon: FilesIcon, href: "/" },
+  { label: "My Library", icon: LibraryIcon, href: "/" },
 ]
 
 const utilityItems = [
@@ -74,29 +75,22 @@ const utilityItems = [
 ]
 
 const featureCards = [
-  {
-    title: "AI Video",
-    description: "Generate cinematic clips, product demos, and campaign edits from text prompts.",
-    icon: ClapperboardIcon,
-    cta: "Create Now",
-    size: "lg:col-span-2",
-    media: { src: "/text-to-video.mp4", type: "video" },
-  },
+
   {
     title: "AI Images",
     description: "Create polished visuals, ads, thumbnails, and concept art in seconds.",
     icon: ImageIcon,
     cta: "Create Now",
-    size: "",
+    size: "lg:col-span-2",
     media: { src: "/image-to-video.mp4", type: "video" },
   },
   {
-    title: "AI Video Agent",
-    description: "Let an autonomous agent storyboard, generate, and refine video assets.",
-    icon: WandSparklesIcon,
-    cta: "Launch Agent",
+    title: "AI Video",
+    description: "Generate cinematic clips, product demos, and campaign edits from text prompts.",
+    icon: ClapperboardIcon,
+    cta: "Create Now",
     size: "",
-    media: { src: "/ai-video-agent.mp4", type: "video" },
+    media: { src: "/text-to-video.mp4", type: "video" },
   },
   {
     title: "AI Voice",
@@ -106,6 +100,15 @@ const featureCards = [
     size: "",
     media: { src: "/ai-voice.png", type: "image" },
   },
+  {
+    title: "AI Video Agent",
+    description: "Let an autonomous agent storyboard, generate, and refine video assets.",
+    icon: WandSparklesIcon,
+    cta: "Launch Agent",
+    size: "lg:col-span-2",
+    media: { src: "/ai-video-agent.mp4", type: "video" },
+  },
+
   {
     title: "AI Templates",
     description: "Start faster with prompt systems for ads, launches, education, and social.",
@@ -119,7 +122,7 @@ const featureCards = [
     description: "Create expressive talking avatars for walkthroughs, explainers, and social videos.",
     icon: UserRoundIcon,
     cta: "Create Avatar",
-    size: "lg:col-span-2",
+    size: "lg:col-span-1",
     media: { src: "/avatar.mp4", type: "video" },
   },
 ]
@@ -168,8 +171,9 @@ function SidebarContent() {
 
       <nav className="space-y-1">
         {navigationItems.map((item) => (
-          <button
+          <Link
             key={item.label}
+            href={item.href}
             className={cn(
               "flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition",
               item.active
@@ -179,7 +183,7 @@ function SidebarContent() {
           >
             <item.icon className="size-4" />
             {item.label}
-          </button>
+          </Link>
         ))}
       </nav>
 
@@ -218,6 +222,7 @@ function SidebarContent() {
 
 function FeatureCard({ feature }: { feature: (typeof featureCards)[number] }) {
   const isVideo = feature.media.type === "video"
+  const href = feature.title === "AI Images" ? "/ai-images" : "/"
 
   return (
     <article
@@ -251,7 +256,12 @@ function FeatureCard({ feature }: { feature: (typeof featureCards)[number] }) {
           <div className="flex size-11 items-center justify-center rounded-xl border border-border/40 bg-background/70 text-primary shadow-sm backdrop-blur-md">
             <feature.icon className="size-5" />
           </div>
-          <Button size="sm" variant="secondary" className="rounded-full bg-background/75 shadow-sm backdrop-blur-md">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="rounded-full bg-background/75 shadow-sm backdrop-blur-md"
+            render={<Link href={href} />}
+          >
             {feature.cta}
             <ArrowRightIcon className="size-4 transition group-hover:translate-x-0.5" />
           </Button>
