@@ -4,7 +4,6 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 
-import { syncUserProfile } from "@/lib/auth/sync-user"
 import { insforge } from "@/lib/insforge/client"
 
 export default function AuthCallbackPage() {
@@ -22,7 +21,6 @@ export default function AuthCallbackPage() {
         return
       }
 
-      await syncUserProfile(data.user, "sign_in")
       router.replace("/")
     }
 
@@ -35,7 +33,7 @@ export default function AuthCallbackPage() {
         <Loader2Icon className="mx-auto mb-4 size-6 animate-spin text-primary" />
         <h1 className="text-lg font-semibold">Completing sign in</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Securing your Kravix AI Studio session.
+          Securing your Kravix session.
         </p>
       </div>
     </main>
