@@ -46,7 +46,7 @@ export function SignInForm() {
       return
     }
 
-    router.replace("/")
+    router.replace("/dashboard")
     router.refresh()
   }
 
