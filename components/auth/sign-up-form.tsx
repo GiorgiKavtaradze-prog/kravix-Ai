@@ -17,7 +17,6 @@ import {
   type VerificationValues,
   verificationSchema,
 } from "@/lib/auth/validation"
-import { syncUserProfile } from "@/lib/auth/sync-user"
 import { insforge } from "@/lib/insforge/client"
 
 export function SignUpForm() {
@@ -69,9 +68,6 @@ export function SignUpForm() {
       return
     }
 
-    if (data.user) {
-      await syncUserProfile(data.user, "sign_up")
-    }
     router.replace("/")
     router.refresh()
   }
@@ -90,7 +86,6 @@ export function SignUpForm() {
       return
     }
 
-    await syncUserProfile(data.user, "sign_up")
     router.replace("/")
     router.refresh()
   }

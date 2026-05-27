@@ -9,8 +9,8 @@ export default function SignInPage() {
   return (
     <AuthShell
       eyebrow="Welcome back"
-      title="Sign in to your studio"
-      description="Access your AI operations dashboard, workflows, and team spaces."
+      title="Sign in"
+      description="Access your Kravix account."
       footer={
         <>
           New to Kravix?{" "}

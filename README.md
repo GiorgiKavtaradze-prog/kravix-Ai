@@ -14,47 +14,6 @@ pnpm dev
 bun dev
 ```
 
-## AI Image Generation Setup
-
-The `/ai-images` workspace uses InsForge for auth, database, AI, and storage,
-plus Trigger.dev for background generation. Configure these environment
-variables before running jobs:
-
-```bash
-NEXT_PUBLIC_INSFORGE_URL=
-NEXT_PUBLIC_INSFORGE_ANON_KEY=
-INSFORGE_URL=
-INSFORGE_ANON_KEY=
-INSFORGE_SERVICE_ROLE_KEY=
-INSFORGE_EDGE_FUNCTION_TOKEN=
-TRIGGER_PROJECT_REF=
-TRIGGER_SECRET_KEY=
-REPLICATE_API_TOKEN=
-REPLICATE_OPENAI_API_KEY=
-```
-
-`INSFORGE_URL` and `INSFORGE_ANON_KEY` fall back to their `NEXT_PUBLIC_*`
-equivalents in local development. Use either `INSFORGE_SERVICE_ROLE_KEY` or
-`INSFORGE_EDGE_FUNCTION_TOKEN` when the server needs privileged database and
-storage access. `REPLICATE_OPENAI_API_KEY` is optional and is only passed to
-Replicate's OpenAI image models when you want to bring your own verified OpenAI
-key.
-
-For local testing, run the Next.js app and the Trigger.dev worker in separate
-terminals:
-
-```bash
-npm run dev
-npm run trigger:dev
-```
-
-If runs stay queued in the Trigger.dev dashboard, the task worker is not
-running or the latest task version has not been deployed. Deploy tasks with:
-
-```bash
-npm run trigger:deploy
-```
-
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.

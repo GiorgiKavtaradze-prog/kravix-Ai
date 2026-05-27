@@ -15,7 +15,6 @@ import {
   signInSchema,
   type SignInValues,
 } from "@/lib/auth/validation"
-import { syncUserProfile } from "@/lib/auth/sync-user"
 import { insforge } from "@/lib/insforge/client"
 
 export function SignInForm() {
@@ -47,7 +46,6 @@ export function SignInForm() {
       return
     }
 
-    await syncUserProfile(data.user, "sign_in")
     router.replace("/")
     router.refresh()
   }

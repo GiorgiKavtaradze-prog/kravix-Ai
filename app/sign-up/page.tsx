@@ -7,8 +7,8 @@ export default function SignUpPage() {
   return (
     <AuthShell
       eyebrow="Start building"
-      title="Create your AI Studio"
-      description="Set up a secure workspace for agents, prompts, evals, and production workflows."
+      title="Create your account"
+      description="Set up secure access to Kravix."
       footer={
         <>
           Already have an account?{" "}
