@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation"
 import { dashboardNavigationItems } from "@/components/dashboard/dashboard-sidebar"
 
 function getDashboardPageTitle(pathname: string) {
+  if (pathname === "/dashboard/profile") {
+    return "Profile Settings"
+  }
+
   const currentItem = dashboardNavigationItems.find((item) => {
     if (item.href === "/dashboard") {
       return pathname === item.href

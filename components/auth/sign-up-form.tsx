@@ -18,6 +18,7 @@ import {
   verificationSchema,
 } from "@/lib/auth/validation"
 import { insforge } from "@/lib/insforge/client"
+import { syncCurrentUserProfile } from "@/lib/insforge/sync-user-profile"
 
 export function SignUpForm() {
   const router = useRouter()
@@ -68,6 +69,17 @@ export function SignUpForm() {
       return
     }
 
+    try {
+      await syncCurrentUserProfile()
+    } catch (profileError) {
+      setFormError(
+        profileError instanceof Error
+          ? profileError.message
+          : "Account created, but could not save your profile."
+      )
+      return
+    }
+
     router.replace("/dashboard")
     router.refresh()
   }
@@ -83,6 +95,17 @@ export function SignUpForm() {
 
     if (error || !data) {
       setFormError(error?.message ?? "Unable to verify this code.")
+      return
+    }
+
+    try {
+      await syncCurrentUserProfile()
+    } catch (profileError) {
+      setFormError(
+        profileError instanceof Error
+          ? profileError.message
+          : "Email verified, but could not save your profile."
+      )
       return
     }
 
