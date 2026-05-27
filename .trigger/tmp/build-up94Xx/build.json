@@ -1,0 +1,108 @@
+{
+  "build": {
+  },
+  "cliPackageVersion": "4.4.6",
+  "config": {
+    "dirs": [
+      "./trigger"
+    ],
+    "project": "proj_ajdnbimpnylraeealpzf"
+  },
+  "configPath": "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger.config.mjs",
+  "contentHash": "26b32c3344792b67456e728224a894ee",
+  "customConditions": [
+  ],
+  "deploy": {
+    "env": {
+    }
+  },
+  "environment": "dev",
+  "externals": [
+    {
+      "name": "import-in-the-middle",
+      "version": "1.15.0"
+    }
+  ],
+  "files": [
+    {
+      "entry": "trigger/image-generation.ts",
+      "out": "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger/image-generation.mjs"
+    }
+  ],
+  "indexWorkerEntryPoint": "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-index-worker.mjs",
+  "otelImportHook": {
+    "include": [
+    ]
+  },
+  "outputHashes": {
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-244PAGAH.mjs": "MKUfkr/RxtE",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-244PAGAH.mjs.map": "5cjM5D5eV/w",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-BSH2TD44.mjs": "CZ5PF0JHUs8",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-BSH2TD44.mjs.map": "s44f3ZLy2qk",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ED4YJFD3.mjs": "mmK3b5tQKZE",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ED4YJFD3.mjs.map": "kes+9s3d/Ts",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-EXP2OSCK.mjs": "ctjCODYM0fc",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-EXP2OSCK.mjs.map": "dQpvAOos+Yc",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-IB4V73K4.mjs": "Z5jAUjgrZzo",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-IB4V73K4.mjs.map": "fhm3KjIkXa0",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-JD367U37.mjs": "Lst1ZnHmbw4",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-JD367U37.mjs.map": "zCylYZCpgVA",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-USHNXJ63.mjs": "RkI7ln77K/4",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-USHNXJ63.mjs.map": "LMPzUuAiOIM",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-XCQ7TDG6.mjs": "vb3nSOAjRZM",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-XCQ7TDG6.mjs.map": "AmAfEeQtQJo",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-XX4TROOQ.mjs": "g1bj0xD6paM",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-XX4TROOQ.mjs.map": "UsqUxffraus",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ZDRA45OJ.mjs": "ORLSjqyVcYI",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ZDRA45OJ.mjs.map": "5n35ubSQVzU",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ZHD6U6WT.mjs": "vm9DufdANmE",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/chunk-ZHD6U6WT.mjs.map": "lClc2UqpqQw",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/crypto.node-FURLATZW.mjs": "zGJ8Kk+9yxY",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/crypto.node-FURLATZW.mjs.map": "0b4tlwmkM3g",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/esm-3JMIGGOE.mjs": "26nm/p6TwVs",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/esm-3JMIGGOE.mjs.map": "CSvtQ8IwLEk",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-bsd-ICCT6NPV.mjs": "LJHfHsAvj5I",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-bsd-ICCT6NPV.mjs.map": "MEVdITbbMCE",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-darwin-UP5KMLAI.mjs": "ZCtsOQWqqIk",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-darwin-UP5KMLAI.mjs.map": "hd3Uo5mbO8o",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-linux-P4XYM4UK.mjs": "nc6O1EA13f4",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-linux-P4XYM4UK.mjs.map": "LR3Lh4qLcJM",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-unsupported-BPADDXCQ.mjs": "NTJ9Kvti624",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-unsupported-BPADDXCQ.mjs.map": "2eHyOg8TCJ4",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-win-CJOVSEAP.mjs": "E/NYVdqqvSI",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/getMachineId-win-CJOVSEAP.mjs.map": "p2vMLwR5uFk",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-index-worker.mjs": "EwPhVkAY7cc",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-index-worker.mjs.map": "0PG/qrhpx44",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-run-worker.mjs": "bfu5pHsV+TU",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-run-worker.mjs.map": "RhMzmqkgfuo",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/s2s-CNB3NKIT.mjs": "/Mn1COag7QU",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/s2s-CNB3NKIT.mjs.map": "MW9v0B7Nw5U",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger.config.mjs": "siH8N9Sw+d4",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger.config.mjs.map": "DaGCYZaKm0E",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger/image-generation.mjs": "tDI3FB2T/SQ",
+    "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/trigger/image-generation.mjs.map": "7E/Ntg3CZv8"
+  },
+  "outputPath": "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx",
+  "packageVersion": "4.4.6",
+  "runWorkerEntryPoint": "/Users/rahulsanap/Documents/Projects/Nextjs React/kravix-ai-studio/.trigger/tmp/build-up94Xx/node_modules/trigger.dev/dist/esm/entryPoints/dev-run-worker.mjs",
+  "runtime": "node",
+  "sources": {
+    "package.json": {
+      "contentHash": "807eacecbce318bd0d89eae1dc44978d",
+      "contents": "eJx1VE2T6iAQvPsrqJwfmMSsup728A7vV2wVgVEpCaSARN2t/e+vIEjwY2/SPQPTPR2/FwgVinZQ7FBxMnQUF0wFtm7gQhd/PDuCsUIrX1CSipQT2hsxUufbnBkgQJYZ0Ttb7ND3AiGECg6j71JwcYjDiAjC+AxtT9kJ4X+oqjekJCWpwo1T/c4NptVPXQH9tc8ZcTiA2cX34tE3P1f0Ul/viwIS69pBSJ5en06Rso4al6jpFCkpVGDAhl8LhH6CIRx6UBwUE5C58tFSC3gQSwOUhb7PirxFXz1/1Pq016ZbGrBaevtD0RtpsiKh7F6bAywtP8U7alLNfNRHOIyppCENWd8qmKTW4pEaQRUDTAd31Ea4YM5nSTazvUzaS0BrUmVolx7OUE4d4L2y8b3VPDF0raSYUaMHCxLP4rdkPVcJ1Q8Oa9fHqxtSJ5cHJjjg3LUq6/Rr8XC1JvWs0qPYHaEDG4VlFqSrqndSk+YOxpxecS/YCcz02F3iYonufuv2O8R+iaF5Qzbrx2YDVnzRVgLuqQJ5c6yqZsUG2JEaN1Ersp3F2iPlTMWWHNdKxYFrUpJNyj8V8iwUxx2YA8T7MvPcGVMlOr88Zm3yPvEjHWRadprvS/OUq1Ue+/Hv6+Sn0DIp4joqsq3n0MYxmbXLXlt3m6V5Gev0sd4H+8Nde7BLpfkktC4fmCxB76+o214zOn7ZHnzAMNNqLw74dfwyQfdCMh3PCsIs4c90+vCDtYufxX92e3/J"
+    },
+    "trigger.config.ts": {
+      "contentHash": "14fae5df994cb5cf9fb3d0838b041135",
+      "contents": "eJxVjUELgjAYQO/7FV87FcgUunkKzKQuxfAWIeK+ySo3+TZFEP97GF26PR48nul6RwFmUKiNxcxZbVpYQJPrgB8CmbZFEgrH2KsXZwynb6BQ18M7/GXbmQH05J7YhHSFBr0XaEdRynNR5LK6yeslz8pK5qdNxACUIZ/CnYv4N+KPVXf1dByoDsbZFPZJErFlxz7BjTgI"
+    },
+    "trigger/image-generation.ts": {
+      "contentHash": "f2a8d0e136972e63b5e6c512a162db11",
+      "contents": "eJydV9tu4zYQfddXTIU+yIBWeRfgutmsNwiKLYJcnoLAS0tjWYhMCiSVNE317wXvkmwrwPolMXk4lzNzhnR9aBmX8AENqyrkKRxQkpJIkoIk4gV62HF2gPhPyWsFyEp8vRDlSxxFtT0aAVyv/17fXT6sv21uflxer+83Xx+v/lo/pBFAfSAVXiNFTmTN6L1knFR4S+Re7XZtSeRom8hOpJF3e9HU2wtt40vlURcqwC0RGA+DqFDejJ39YCU2yo18bxEmm5eixULeqf8/9XdQhkTwBryjd9g2dUEkTuzCJ7a4OzcwV3BUhqj4zniF98hfkV81NVI5tUbFTkEuhMbEUYT/aBs6QxuEieiWvDeMlLC05LgAbsochOQ1rRT/AvloQWc6Wmk5e61L5JrM8fqhlYMFjjvkSAvj/pF7MPwHtGuaUxCxcqCnZ9cs9/W/mM9UKwLFV1nLKyZkDrQ7bJFHfRQR8U4L2HW00HXQxu5QtIwKfGBfG7ZN6kloC01OwaiQwC0UlkDeSC1hh7LY+yOLSAW4g+Q3B8zYizkPIPecvQHFN1hzznjy85GSbYMgmbHi+MfShJXD7x/ejNBN3/9cRAB9pGmSHac2Cg/bqgQWKlFbcxN2NSw6LLVsExVVXeYQu90v2m2sxMA7moPhKmlNk+QnW2cByz9sfsaV6z5YznRsookCkPzdHnbHdW/B8pxQXTCZ7UFrx5KuFxfe4knKRdcqYhzJg6Y3vhXrEyeGdfXpnTs3ATOBMolNceIU4pazAoWoaRW7M6ZCp4eYT2covamZET/H6oAlOCsnpJM1SCu594ysZsAelJ8HeYwy9XQW9jzA5fD0PE7iA5xgUmiVTAs7FJ2qZkZnEqp7cKPbfNywcUGZ72H/OOGwR8LoCAb8pHG4fvFZ/YVkfFh8qwllSM0Wn+Dc3BmfbYncw3LmikwCATZuM7DTo/Vhk9nNxaQuKqcculbhv+kbHpVw3JJW0aBOTuyZMPF4l5m6kJIzV/4iwIzZRCWZBppGqh54npP2AJYdUAil7dUK4jBkVYw4HbJZfKRtw4VGl4+8gaX3GXhZZR1vYLXyW1Mm5gnIKpS33bapi0fe6OwnMi/YoW1QRbmcHyCzRQ4tEHuDcVj8GIiUo+gaudGcbDpz+VkC0gHM9X0+OhweADnE4e2SnoRs7JjVf7LRy+HMgTAi8sG4GIMt7RvFZa5FM943rwGxKfaEV1gGkYdnwviAmQgb/slIcOzZ0RIIFPnswAHoh192pG46jhvbubl+DAVA7+X6yfwJZXZtbd8JfkMv91AQ9eJIcCwrewdb+YTG1zDV45LQAtnOaA5WZsPrLYf4ZnqpqsywzGIXufkNkemDyTl4nA76a/wsne9zO61sQMdz+1cu4xMhHZXr2OF8naxNH5eZZjr6yBW8T6N+Ef0P0gZSlw=="
+    },
+    "tsconfig.json": {
+      "contentHash": "02fc19ad21338c2ab820a70136310db4",
+      "contents": "eJxtUU1Lw0AQvedXLHMMbaJehJ4E6cFiEfRYimyyQ7t2v9id1EjJf5fdJNVET8O892b2vdlLxhjUVjup0L84ktYEWLFLxhhjQNwfkGDFYP12d3N7D4seV7KCFduBsBoWLJZCEnpeKYw9BoMtwX5Qc6Xs5yauJd/gAIaTdM+yejxifZox5GVNU8zYtZYzDMPWikbhkyH01k1JnajofDAzwV8xWNXEsFFRNUYo9KPER/KMm2DNdtzya7MMVnFC0XOzVB+hjRs98pqWsRmHTO1RoyGupgNONQeZTr5LABtO36fmOkVIAQa4S3U8reN0/PkvxuChzNPPFGUO+2wc6KI8mlCNwOtbae8SzbkQBYXRap6X+d/2mqSIQyV9OQzlTNpTAs//06nVFGKS5B+wvRoCYwW+6+Gm+6zLvgEbXbUJ"
+    }
+  },
+  "target": "dev"
+}
