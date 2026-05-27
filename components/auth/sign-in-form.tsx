@@ -16,6 +16,7 @@ import {
   type SignInValues,
 } from "@/lib/auth/validation"
 import { insforge } from "@/lib/insforge/client"
+import { syncCurrentUserProfile } from "@/lib/insforge/sync-user-profile"
 
 export function SignInForm() {
   const router = useRouter()
@@ -43,6 +44,17 @@ export function SignInForm() {
 
     if (error || !data) {
       setFormError(error?.message ?? "Unable to sign in. Check your details.")
+      return
+    }
+
+    try {
+      await syncCurrentUserProfile()
+    } catch (profileError) {
+      setFormError(
+        profileError instanceof Error
+          ? profileError.message
+          : "Signed in, but could not save your profile."
+      )
       return
     }
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import * as React from "react"
 
 import { insforge } from "@/lib/insforge/client"
+import { syncCurrentUserProfile } from "@/lib/insforge/sync-user-profile"
 
 export default function AuthCallbackPage() {
   const router = useRouter()
@@ -16,6 +17,18 @@ export default function AuthCallbackPage() {
       if (error || !data.user) {
         const message = encodeURIComponent(
           error?.message ?? "Unable to complete OAuth sign in."
+        )
+        router.replace(`/sign-in?insforge_error=${message}`)
+        return
+      }
+
+      try {
+        await syncCurrentUserProfile()
+      } catch (profileError) {
+        const message = encodeURIComponent(
+          profileError instanceof Error
+            ? profileError.message
+            : "Unable to save your profile."
         )
         router.replace(`/sign-in?insforge_error=${message}`)
         return
