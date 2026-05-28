@@ -71,6 +71,7 @@ import { Progress, ProgressLabel } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 
 type RunState = {
   id: string
@@ -252,7 +253,11 @@ function VideoDetailsDialog({
               )}
             >
               {video.video_url ? (
-                <video src={video.video_url} controls className="size-full object-contain" />
+                video.video_mime_type?.startsWith("image/") ? (
+                  <MediaImage src={video.video_url} alt={video.title} className="size-full object-contain" />
+                ) : (
+                  <video src={video.video_url} controls className="size-full object-contain" />
+                )
               ) : (
                 <MediaImage src={video.thumbnail_url} alt={video.title} />
               )}
@@ -294,11 +299,13 @@ function VideoCard({
   onRetry: (video: AvatarVideoRecord) => void
   isRetrying: boolean
 }) {
+  const isProcessing = video.status !== "completed" && video.status !== "failed"
+
   return (
     <article className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className={cn("relative overflow-hidden bg-muted", video.screen_ratio === "9:16" ? "aspect-[9/12]" : "aspect-video")}>
+      <div className="relative overflow-hidden bg-muted w-full aspect-video">
         <MediaImage src={video.thumbnail_url ?? video.avatar_image_url} alt={video.title} className="transition duration-300 group-hover:scale-105" />
-        <div className="absolute left-3 top-3 flex gap-2">
+        <div className="absolute left-3 top-3 flex gap-2 z-20">
           <Badge variant={statusVariant(video.status)} className="capitalize">
             {video.status}
           </Badge>
@@ -306,6 +313,15 @@ function VideoCard({
             {video.screen_ratio}
           </Badge>
         </div>
+        {isProcessing && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/65 backdrop-blur-[2px] text-white p-4 text-center">
+            <div className="relative flex items-center justify-center mb-2">
+              <Loader2Icon className="size-8 animate-spin text-primary" />
+              <div className="absolute size-6 rounded-full bg-primary/20 animate-ping" />
+            </div>
+            <span className="text-xs font-semibold tracking-wider uppercase text-primary-foreground/90">{video.status}...</span>
+          </div>
+        )}
       </div>
       <div className="space-y-4 p-4">
         <div className="min-w-0">
@@ -319,49 +335,56 @@ function VideoCard({
           <span className="rounded-md bg-muted px-2 py-1">{video.credits_charged} credits</span>
           <span className="rounded-md bg-muted px-2 py-1">{prettyDate(video.created_at)}</span>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => onPreview(video)}
-            disabled={!video.video_url}
-          >
-            <EyeIcon />
-            Preview
-          </Button>
-          {video.video_url ? (
-            <a
-              href={video.video_url}
-              download
-              className={buttonVariants({ variant: "outline", size: "sm", className: "px-2" })}
-              aria-label={`Download ${video.title}`}
+        {isProcessing ? (
+          <div className="flex items-center justify-center gap-2 py-2 text-sm font-semibold text-primary bg-primary/5 rounded-md border border-primary/10">
+            <Loader2Icon className="size-4 animate-spin text-primary" />
+            <span className="capitalize">Processing Video...</span>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => onPreview(video)}
+              disabled={!video.video_url}
             >
-              <DownloadIcon className="size-4" />
-            </a>
-          ) : null}
-          {video.status === "failed" ? (
+              <EyeIcon />
+              Preview
+            </Button>
+            {video.video_url ? (
+              <a
+                href={video.video_url}
+                download
+                className={buttonVariants({ variant: "outline", size: "sm", className: "px-2" })}
+                aria-label={`Download ${video.title}`}
+              >
+                <DownloadIcon className="size-4" />
+              </a>
+            ) : null}
+            {video.status === "failed" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-2"
+                onClick={() => onRetry(video)}
+                disabled={isRetrying}
+                aria-label={`Retry ${video.title}`}
+              >
+                {isRetrying ? <Loader2Icon className="animate-spin" /> : <RotateCcwIcon />}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               size="sm"
               className="px-2"
-              onClick={() => onRetry(video)}
-              disabled={isRetrying}
-              aria-label={`Retry ${video.title}`}
+              onClick={() => onDetails(video)}
+              aria-label={`Open ${video.title} details`}
             >
-              {isRetrying ? <Loader2Icon className="animate-spin" /> : <RotateCcwIcon />}
+              <FileVideoIcon />
             </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            size="sm"
-            className="px-2"
-            onClick={() => onDetails(video)}
-            aria-label={`Open ${video.title} details`}
-          >
-            <FileVideoIcon />
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </article>
   )
@@ -381,8 +404,8 @@ export function AiVideoAvatarsClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function refreshVideos() {
-    setIsLoading(true)
+  async function refreshVideos(showSkeleton = true) {
+    if (showSkeleton) setIsLoading(true)
 
     try {
       const response = await fetch("/api/avatar-videos", {
@@ -399,9 +422,22 @@ export function AiVideoAvatarsClient() {
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load avatar videos.")
     } finally {
-      setIsLoading(false)
+      if (showSkeleton) setIsLoading(false)
     }
   }
+
+  React.useEffect(() => {
+    const hasProcessing = videos.some(
+      (video) => video.status !== "completed" && video.status !== "failed"
+    )
+    if (!hasProcessing) return
+
+    const interval = setInterval(() => {
+      void refreshVideos(false)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [videos])
 
   async function retryVideo(video: AvatarVideoRecord) {
     setRetryingId(video.id)
@@ -507,7 +543,11 @@ export function AiVideoAvatarsClient() {
           </DialogHeader>
           {previewVideo?.video_url ? (
             <div className={cn("mx-auto overflow-hidden rounded-lg bg-black", previewVideo.screen_ratio === "9:16" ? "aspect-[9/16] max-h-[70vh]" : "aspect-video w-full")}>
-              <video src={previewVideo.video_url} controls autoPlay className="size-full object-contain" />
+              {previewVideo.video_mime_type?.startsWith("image/") ? (
+                <MediaImage src={previewVideo.video_url} alt={previewVideo.title} className="size-full object-contain" />
+              ) : (
+                <video src={previewVideo.video_url} controls autoPlay className="size-full object-contain" />
+              )}
             </div>
           ) : null}
         </DialogContent>
@@ -656,7 +696,13 @@ function PreviewPanel({
         </div>
         <div className={cn("mx-auto overflow-hidden rounded-lg border border-border bg-muted", ratio === "9:16" ? "aspect-[9/16] max-h-[560px]" : "aspect-video")}>
           {videoUrl ? (
-            <video src={videoUrl} controls className="size-full bg-black object-contain" />
+            completedVideo?.video_mime_type?.startsWith("image/") || videoUrl.match(/\.(png|jpe?g|webp)($|\?)/i) ? (
+              <div className="relative size-full">
+                <MediaImage src={videoUrl} alt={avatar?.name ?? "Selected avatar"} className="size-full object-contain" />
+              </div>
+            ) : (
+              <video src={videoUrl} controls className="size-full bg-black object-contain" />
+            )
           ) : image ? (
             <div className="relative size-full">
               <MediaImage src={image} alt={avatar?.name ?? "Selected avatar"} />
@@ -1043,43 +1089,69 @@ export function CreateAiVideoAvatarClient() {
             </TabsList>
             <TabsContent value="manual" className="mt-4" />
             <TabsContent value="ai" className="mt-4">
-              <div className="grid gap-3 md:grid-cols-[1fr_220px_auto] md:items-end">
+              <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4 md:p-5">
                 <div className="space-y-2">
-                  <Label htmlFor="script-topic">Topic</Label>
-                  <Input
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="script-topic" className="text-sm font-semibold flex items-center gap-1.5 text-primary">
+                      <SparklesIcon className="size-4 animate-pulse" />
+                      What should your video be about?
+                    </Label>
+                    <span className="text-xs text-muted-foreground font-medium">Describe the topic or outline</span>
+                  </div>
+                  <Textarea
                     id="script-topic"
                     value={topic}
                     onChange={(event) => setTopic(event.target.value)}
-                    placeholder="How our AI studio speeds up campaigns"
-                    disabled={isSubmitting}
+                    placeholder="Describe your video topic in detail (e.g. 'A promotional video for Kravix AI Studio, highlighting our custom voice cloning and premium talking avatars in a professional yet exciting tone')"
+                    disabled={isSubmitting || isGeneratingScript}
+                    rows={3}
+                    className="resize-none border-primary/10 bg-background focus-visible:border-primary focus-visible:ring-primary/20 text-sm placeholder:text-muted-foreground/75"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Tone</Label>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-1">
-                    {avatarVideoTones.map((option) => (
-                      <Button
-                        key={option}
-                        type="button"
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-3 border-t border-primary/10">
+                  <div className="flex items-center gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="script-tone" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                        Script Tone
+                      </Label>
+                      <NativeSelect
+                        id="script-tone"
                         size="sm"
-                        variant={tone === option ? "default" : "outline"}
-                        className="capitalize"
-                        onClick={() => setTone(option)}
-                        disabled={isSubmitting}
+                        value={tone}
+                        onChange={(event) => setTone(event.target.value as ScriptTone)}
+                        disabled={isSubmitting || isGeneratingScript}
+                        className="w-40 bg-background"
                       >
-                        {option}
-                      </Button>
-                    ))}
+                        {avatarVideoTones.map((option) => (
+                          <NativeSelectOption key={option} value={option} className="capitalize">
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </div>
                   </div>
+
+                  <Button
+                    type="button"
+                    size="default"
+                    onClick={() => void generateScript()}
+                    disabled={isGeneratingScript || isSubmitting || !topic.trim()}
+                    className="sm:self-end shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 gap-2 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-white font-medium h-9"
+                  >
+                    {isGeneratingScript ? (
+                      <>
+                        <Loader2Icon className="size-4 animate-spin" />
+                        Generating Script...
+                      </>
+                    ) : (
+                      <>
+                        <WandSparklesIcon className="size-4" />
+                        Generate with AI
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  onClick={() => void generateScript()}
-                  disabled={isGeneratingScript || isSubmitting}
-                >
-                  {isGeneratingScript ? <Loader2Icon className="animate-spin" /> : <WandSparklesIcon />}
-                  Generate
-                </Button>
               </div>
             </TabsContent>
           </Tabs>

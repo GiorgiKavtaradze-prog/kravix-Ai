@@ -2,16 +2,17 @@ import { GoogleGenAI } from "@google/genai"
 import { NextResponse } from "next/server"
 
 import {
-  AVATAR_VIDEO_MAX_SCRIPT_CHARACTERS,
-  isScriptTone,
-  type ScriptTone,
-} from "@/lib/avatar-videos"
+  AI_VIDEO_AGENT_MAX_SCRIPT_CHARACTERS,
+  isAiVideoAgentDuration,
+} from "@/lib/ai-video-agent"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
-function fallbackScript(topic: string, tone: ScriptTone) {
+function fallbackScript(topic: string, duration: number) {
   return [
-    `Here is a ${tone} short video script about ${topic}.`,
-    "Start with a clear hook, explain the key benefit in simple language, and close with one confident call to action.",
+    `Here is a polished ${duration}-second AI video script about ${topic}.`,
+    "Start with a direct hook that names the audience's problem.",
+    "Explain the core idea with one vivid example and keep the language conversational.",
+    "Close with a clear next step that feels confident, useful, and easy to act on.",
   ].join(" ")
 }
 
@@ -22,9 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error }, { status: 401 })
   }
 
-  const { topic, tone } = (await request.json()) as {
+  const { topic, durationSeconds } = (await request.json()) as {
     topic?: string
-    tone?: ScriptTone
+    durationSeconds?: number
   }
   const trimmedTopic = topic?.trim() ?? ""
 
@@ -35,16 +36,16 @@ export async function POST(request: Request) {
     )
   }
 
-  if (!isScriptTone(tone)) {
+  if (!isAiVideoAgentDuration(durationSeconds)) {
     return NextResponse.json(
-      { error: "Choose a valid script tone." },
+      { error: "Choose a valid duration." },
       { status: 400 }
     )
   }
 
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({
-      script: fallbackScript(trimmedTopic, tone),
+      script: fallbackScript(trimmedTopic, durationSeconds),
     })
   }
 
@@ -55,18 +56,19 @@ export async function POST(request: Request) {
       contents: [
         {
           text: [
-            "Write a concise talking avatar video script.",
+            "Write a complete spoken video script for a fully edited AI video.",
             `Topic: ${trimmedTopic}.`,
-            `Tone: ${tone}.`,
-            "Keep it natural for spoken delivery, with no markdown, scene labels, or stage directions.",
-            `Stay under ${AVATAR_VIDEO_MAX_SCRIPT_CHARACTERS} characters.`,
+            `Target duration: ${durationSeconds} seconds.`,
+            "Use natural narration only. Do not include markdown, timestamps, scene labels, camera notes, or stage directions.",
+            "Make the pacing suitable for voiceover, captions, avatar clips, and B-roll.",
+            `Stay under ${AI_VIDEO_AGENT_MAX_SCRIPT_CHARACTERS} characters.`,
           ].join(" "),
         },
       ],
     })
     const script =
-      response.text?.trim().slice(0, AVATAR_VIDEO_MAX_SCRIPT_CHARACTERS) ??
-      fallbackScript(trimmedTopic, tone)
+      response.text?.trim().slice(0, AI_VIDEO_AGENT_MAX_SCRIPT_CHARACTERS) ??
+      fallbackScript(trimmedTopic, durationSeconds)
 
     return NextResponse.json({ script })
   } catch (scriptError) {

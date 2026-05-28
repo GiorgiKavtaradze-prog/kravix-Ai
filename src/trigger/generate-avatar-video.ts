@@ -542,34 +542,48 @@ export const generateAvatarVideoTask = task({
         audio: narration,
       })
 
-      await setDbStage(payload.videoId, payload.userId, "generating_video", 50, "Generating talking avatar video.")
-      const domoTaskId = await createDomoTalkingAvatarTask(video, avatarImage, narration)
-      await updateAvatarVideo(payload.videoId, payload.userId, {
-        domo_task_id: domoTaskId,
-      })
+      const enableDomo = process.env.DOMOAI_VIDEO_GENERATION_ENABLED !== "false"
 
-      await setDbStage(payload.videoId, payload.userId, "processing_output", 72, "Processing DomoAI output.")
-      const domoVideo = await waitForDomoVideo(domoTaskId)
-      const outputUrl = domoVideo.output_videos?.[0]?.url
+      let videoUrl = video.avatar_image_url
+      let mimeType = "image/png"
+      let creditsUsed = null
 
-      if (!outputUrl) {
-        throw new Error("DomoAI did not return a completed video.")
+      if (enableDomo) {
+        await setDbStage(payload.videoId, payload.userId, "generating_video", 50, "Generating talking avatar video.")
+        const domoTaskId = await createDomoTalkingAvatarTask(video, avatarImage, narration)
+        await updateAvatarVideo(payload.videoId, payload.userId, {
+          domo_task_id: domoTaskId,
+        })
+
+        await setDbStage(payload.videoId, payload.userId, "processing_output", 72, "Processing DomoAI output.")
+        const domoVideo = await waitForDomoVideo(domoTaskId)
+        const outputUrl = domoVideo.output_videos?.[0]?.url
+
+        if (!outputUrl) {
+          throw new Error("DomoAI did not return a completed video.")
+        }
+
+        const completedVideo = await downloadDomoVideo(outputUrl)
+
+        await setDbStage(payload.videoId, payload.userId, "uploading_to_storage", 88, "Uploading final video to storage.")
+        videoUrl = await uploadVideoToStorage({
+          userId: payload.userId,
+          videoId: payload.videoId,
+          video: completedVideo,
+        })
+        mimeType = completedVideo.type || "video/mp4"
+        creditsUsed = typeof domoVideo.credits === "number" ? domoVideo.credits : null
+      } else {
+        await setDbStage(payload.videoId, payload.userId, "generating_video", 50, "Skipping DomoAI video generation (using avatar image).")
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await setDbStage(payload.videoId, payload.userId, "processing_output", 75, "Preparing static avatar preview.")
+        await new Promise((resolve) => setTimeout(resolve, 1000))
       }
-
-      const completedVideo = await downloadDomoVideo(outputUrl)
-
-      await setDbStage(payload.videoId, payload.userId, "uploading_to_storage", 88, "Uploading final video to storage.")
-      const videoUrl = await uploadVideoToStorage({
-        userId: payload.userId,
-        videoId: payload.videoId,
-        video: completedVideo,
-      })
 
       await updateAvatarVideo(payload.videoId, payload.userId, {
         video_url: videoUrl,
-        video_mime_type: completedVideo.type || "video/mp4",
-        domo_credits:
-          typeof domoVideo.credits === "number" ? domoVideo.credits : null,
+        video_mime_type: mimeType,
+        domo_credits: creditsUsed,
         status: "completed",
       })
       await setProgress("completed", 100, "Your avatar video is ready.")
