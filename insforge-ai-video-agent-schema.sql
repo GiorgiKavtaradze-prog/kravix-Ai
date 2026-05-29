@@ -122,3 +122,4 @@ begin
     create policy "Users manage own AI video assets" on public.ai_video_assets for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
   end if;
 end $$;
+end $$;

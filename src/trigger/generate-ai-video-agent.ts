@@ -12,6 +12,7 @@ import {
   type AiVideoProjectRecord,
   type AiVideoSceneRecord,
   type CaptionCue,
+  type CaptionWordTiming,
   type RemotionSceneData,
 } from "../../lib/ai-video-agent"
 import { createInsForgeServerClient } from "../../lib/insforge/server"
@@ -49,15 +50,6 @@ type ScenePlan = {
   visualPrompt: string
   stockKeyword: string
   remotionData: RemotionSceneData
-}
-
-type AssetPromptPlan = {
-  sceneIndex: number
-  brollRequirement: string
-  visualPrompt: string
-  stockKeyword: string
-  remotionData: RemotionSceneData
-  illustrationReactCode?: string
 }
 
 type DomoUploadResponse = {
@@ -371,263 +363,6 @@ async function analyzeScenes(project: AiVideoProjectRecord, script: string) {
   } catch {
     return fallback
   }
-}
-
-function assetPromptInstruction(project: AiVideoProjectRecord) {
-  if (project.broll_style === "ai_images") {
-    return "For each scene, create a detailed text-to-image prompt for high-quality cinematic image B-roll. Prompts must describe subject, setting, lens/framing, lighting, palette, and mood. Avoid text, logos, captions, and watermarks."
-  }
-
-  if (project.broll_style === "stock") {
-    return "For each scene, create a short Pixabay search keyword phrase with concrete nouns and visual context. Also provide a concise fallback visual prompt."
-  }
-
-  if (project.broll_style === "ai_video") {
-    return "For each scene, create a motion-focused text-to-video prompt for a short AI video clip. Include camera movement, subject motion, environment, lighting, and style. Avoid text, logos, captions, and watermarks."
-  }
-
-  return [
-    "For each scene, create a premium animated illustration storyboard plan, not generic decorative shapes.",
-    "The visualPrompt must describe a specific scene metaphor from the script: setting, characters or symbolic objects, foreground, midground, background, color palette, camera movement, and 3-5 animated moments.",
-    "The remotionData.visualDirection must be a concrete animation brief that a motion designer could execute.",
-    "Do not include React code in this JSON step. React code is generated in a dedicated step from the visualPrompt.",
-  ].join(" ")
-}
-
-function fallbackIllustrationCode(scene: ScenePlan, index: number) {
-  const accent = scene.remotionData.accentColor || "#14b8a6"
-  const altAccent = index % 2 === 0 ? "#f97316" : "#38bdf8"
-  const darkAccent = index % 2 === 0 ? "#0f766e" : "#7c2d12"
-
-  return `import React from "react";
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-
-export function SceneAnimation({ title = ${JSON.stringify(scene.title)}, summary = ${JSON.stringify(scene.summary)}, accentColor = ${JSON.stringify(accent)} }) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 90 } });
-  const camera = interpolate(frame, [0, 180], [1.08, 1], { extrapolateRight: "clamp" });
-  const floatA = interpolate(frame % 160, [0, 80, 160], [-18, 18, -18]);
-  const floatB = interpolate(frame % 190, [0, 95, 190], [22, -18, 22]);
-  const draw = interpolate(frame, [12, 54], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const scan = interpolate(frame % 120, [0, 120], [-20, 120]);
-  const cardIn = spring({ frame: frame - 18, fps, config: { damping: 20, stiffness: 110 } });
-  const nodeIn = spring({ frame: frame - 36, fps, config: { damping: 16, stiffness: 100 } });
-
-  return (
-    <AbsoluteFill style={{ background: "linear-gradient(135deg, #07111f 0%, #102a32 48%, #24151e 100%)", overflow: "hidden", transform: \`scale(\${camera})\` }}>
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)", backgroundSize: "72px 72px", opacity: 0.42 }} />
-      <div style={{ position: "absolute", inset: 0, background: \`radial-gradient(circle at 18% 20%, \${accentColor}42, transparent 28%), radial-gradient(circle at 82% 68%, ${altAccent}33, transparent 34%)\` }} />
-
-      <div style={{ position: "absolute", left: "7%", top: "16%", width: "30%", height: "50%", borderRadius: 36, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 32px 90px rgba(0,0,0,0.32)", transform: \`translateY(\${floatA}px) translateX(\${interpolate(cardIn, [0, 1], [-70, 0])}px)\`, opacity: cardIn }} />
-      <div style={{ position: "absolute", left: "10%", top: "21%", width: "24%", height: "8%", borderRadius: 999, background: accentColor, opacity: 0.9, transform: \`scaleX(\${draw})\`, transformOrigin: "left" }} />
-      <div style={{ position: "absolute", left: "10%", top: "34%", width: "22%", height: "4%", borderRadius: 999, background: "rgba(255,255,255,0.38)", transform: \`scaleX(\${draw})\`, transformOrigin: "left" }} />
-      <div style={{ position: "absolute", left: "10%", top: "43%", width: "18%", height: "4%", borderRadius: 999, background: "rgba(255,255,255,0.24)", transform: \`scaleX(\${draw})\`, transformOrigin: "left" }} />
-
-      <div style={{ position: "absolute", right: "8%", top: "17%", width: "36%", height: "54%", borderRadius: "44% 56% 48% 52%", background: \`linear-gradient(135deg, \${accentColor}, ${altAccent})\`, opacity: 0.92, transform: \`translate(\${floatB}px, \${floatA * 0.35}px) rotate(\${floatA / 12}deg) scale(\${interpolate(nodeIn, [0, 1], [0.72, 1])})\`, boxShadow: "0 36px 100px rgba(0,0,0,0.36)" }} />
-      <div style={{ position: "absolute", right: "16%", top: "31%", width: "20%", height: "20%", borderRadius: "50%", background: "rgba(255,255,255,0.72)", transform: \`scale(\${0.92 + Math.sin(frame / 12) * 0.05})\` }} />
-      <div style={{ position: "absolute", right: "19%", top: "36%", width: "14%", height: "5%", borderRadius: 999, background: "${darkAccent}", opacity: 0.84 }} />
-
-      <div style={{ position: "absolute", left: "37%", top: "36%", width: "28%", height: 6, borderRadius: 999, background: \`linear-gradient(90deg, \${accentColor}, transparent)\`, transform: \`scaleX(\${draw})\`, transformOrigin: "left", opacity: 0.72 }} />
-      <div style={{ position: "absolute", left: \`\${scan}%\`, top: 0, bottom: 0, width: 2, background: "rgba(255,255,255,0.22)", boxShadow: "0 0 34px rgba(255,255,255,0.42)" }} />
-
-      <div style={{ position: "absolute", left: "8%", right: "8%", bottom: "10%", transform: \`translateY(\${interpolate(enter, [0, 1], [46, 0])}px)\`, opacity: enter }}>
-        <div style={{ display: "inline-block", padding: "10px 16px", borderRadius: 999, background: accentColor, color: "#06111f", fontWeight: 900, fontSize: 24, letterSpacing: 0 }}>Illustrated Scene ${index + 1}</div>
-        <h1 style={{ margin: "22px 0 12px", color: "white", fontSize: 74, lineHeight: 0.92, maxWidth: 1120, fontWeight: 950, letterSpacing: 0 }}>{title}</h1>
-        <p style={{ margin: 0, color: "rgba(255,255,255,0.78)", fontSize: 31, lineHeight: 1.22, maxWidth: 980 }}>{summary}</p>
-      </div>
-    </AbsoluteFill>
-  );
-}
-`
-}
-
-async function generateIllustrationReactCode(
-  project: AiVideoProjectRecord,
-  scene: Pick<
-    AiVideoSceneRecord,
-    | "scene_index"
-    | "title"
-    | "summary"
-    | "voiceover_segment"
-    | "caption_text"
-    | "visual_prompt"
-    | "remotion_data"
-  >
-) {
-  const remotionData = (scene.remotion_data ?? {}) as RemotionSceneData
-  const fallback = fallbackIllustrationCode(
-    {
-      title: scene.title,
-      summary: scene.summary,
-      startTime: 0,
-      endTime: 5,
-      voiceoverSegment: scene.voiceover_segment,
-      captionText: scene.caption_text,
-      brollRequirement: "Animated illustration scene.",
-      visualPrompt: scene.visual_prompt ?? scene.summary,
-      stockKeyword: scene.title,
-      remotionData: {
-        layout: "illustration",
-        transition: "fade",
-        captionPosition: "bottom",
-        visualDirection: remotionData.visualDirection ?? "Animated illustration scene.",
-        accentColor: remotionData.accentColor ?? "#14b8a6",
-      },
-    },
-    scene.scene_index
-  )
-
-  if (!process.env.GEMINI_API_KEY) return fallback
-
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
-      contents: [
-        {
-          text: [
-            "Return only TSX source code. Do not wrap it in markdown.",
-            "Write a self-contained React Remotion animated illustration scene component that looks like a finished editorial explainer motion graphic, not a placeholder.",
-            "Use only React plus Remotion primitives: AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig.",
-            "Export a named component `SceneAnimation`.",
-            "The component must accept props `{ title: string; summary: string; accentColor: string }`.",
-            "Hard requirements:",
-            "- Create a full designed scene with background, foreground, midground, symbolic objects, and visual metaphor tied directly to the script.",
-            "- Use at least 10 distinct visual elements and at least 5 animated values driven by frame, spring, or interpolate.",
-            "- Include camera movement or parallax, object entrance animation, looping secondary motion, and an ending hold.",
-            "- Use layered gradients, panels, icons/objects made from divs, lines/connectors, particles or data trails where relevant.",
-            "- Use the title and summary props as small optional labels only; the main visual must communicate the script without relying on text.",
-            "- Every object must be scene-specific. Avoid generic boxes, generic circles, and arrays of identical blocks unless they represent a concrete concept from the scene.",
-            "- Use stable 1920x1080/1080x1920 safe-area composition via percentage positioning and inline styles.",
-            "Do not import images, external UI libraries, CSS files, network assets, or fonts.",
-            "Do not output a simple demo like three scaling squares, bouncing circles, or generic cards.",
-            `Screen size: ${project.screen_size}.`,
-            `Scene title: ${scene.title}.`,
-            `Scene summary: ${scene.summary}.`,
-            `Voiceover: ${scene.voiceover_segment}.`,
-            `Animation prompt: ${scene.visual_prompt ?? scene.summary}.`,
-            `Visual direction: ${remotionData.visualDirection ?? ""}.`,
-            `Accent color: ${remotionData.accentColor ?? "#14b8a6"}.`,
-          ].join(" "),
-        },
-      ],
-    })
-    const source = response.text
-      ?.replace(/^```tsx\s*/i, "")
-      .replace(/^```ts\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```$/i, "")
-      .trim()
-
-    if (!isHighQualityIllustrationSource(source)) return fallback
-
-    return source
-  } catch {
-    return fallback
-  }
-}
-
-function isHighQualityIllustrationSource(source: string | undefined) {
-  if (!source || !source.includes("SceneAnimation")) return false
-
-  const lower = source.toLowerCase()
-  const divCount = (source.match(/<div/g) ?? []).length
-  const animationCalls =
-    (source.match(/interpolate\(/g) ?? []).length +
-    (source.match(/spring\(/g) ?? []).length
-  const hasGenericArrayDemo =
-    /\[\s*0\s*,\s*1\s*,\s*2\s*\]\.map/.test(source) ||
-    /width:\s*100,\s*height:\s*100/.test(source)
-  const hasLayering =
-    lower.includes("radial-gradient") ||
-    lower.includes("linear-gradient") ||
-    lower.includes("boxshadow") ||
-    lower.includes("box-shadow")
-
-  return divCount >= 8 && animationCalls >= 4 && hasLayering && !hasGenericArrayDemo
-}
-
-async function generateAssetPromptPlans(
-  project: AiVideoProjectRecord,
-  scenes: ScenePlan[],
-  script: string
-) {
-  const fallback = scenes.map((scene, index) => ({
-    sceneIndex: index,
-    brollRequirement: scene.brollRequirement,
-    visualPrompt: scene.visualPrompt,
-    stockKeyword: scene.stockKeyword,
-    remotionData: scene.remotionData,
-    illustrationReactCode: undefined,
-  })) satisfies AssetPromptPlan[]
-
-  if (!process.env.GEMINI_API_KEY) return fallback
-
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
-      contents: [
-        {
-          text: [
-            "Return only a valid JSON array. Generate asset prompts based on the selected asset type and script.",
-            `Selected asset type: ${project.broll_style}. Screen size: ${project.screen_size}.`,
-            assetPromptInstruction(project),
-            "Each object must include sceneIndex, brollRequirement, visualPrompt, stockKeyword, remotionData.",
-            project.broll_style === "illustration_animation"
-              ? "Do not include illustrationReactCode. Only return the storyboard prompt and remotionData visual direction."
-              : "",
-            `Script: ${script}`,
-            `Scenes: ${JSON.stringify(scenes)}`,
-          ].join(" "),
-        },
-      ],
-    })
-    const parsed = JSON.parse(extractJson(response.text ?? "")) as Partial<AssetPromptPlan>[]
-
-    if (!Array.isArray(parsed) || !parsed.length) return fallback
-
-    return fallback.map((plan, index) => {
-      const generated =
-        parsed.find((item) => item.sceneIndex === index) ?? parsed[index] ?? {}
-
-      return {
-        ...plan,
-        ...generated,
-        sceneIndex: index,
-        remotionData: {
-          ...plan.remotionData,
-          ...(generated.remotionData ?? {}),
-        },
-        illustrationReactCode: undefined,
-      }
-    })
-  } catch {
-    return fallback
-  }
-}
-
-function applyAssetPromptPlans(scenes: ScenePlan[], plans: AssetPromptPlan[]) {
-  return scenes.map((scene, index) => {
-    const plan = plans.find((item) => item.sceneIndex === index) ?? plans[index]
-
-    if (!plan) return scene
-
-    return {
-      ...scene,
-      brollRequirement: plan.brollRequirement,
-      visualPrompt: plan.visualPrompt,
-      stockKeyword: plan.stockKeyword,
-      remotionData: {
-        ...scene.remotionData,
-        ...plan.remotionData,
-        ...(plan.illustrationReactCode
-          ? { illustrationReactCode: plan.illustrationReactCode }
-          : {}),
-      },
-    }
-  })
 }
 
 async function saveScenes(project: AiVideoProjectRecord, scenes: ScenePlan[]) {
@@ -1049,7 +784,7 @@ async function transcribeCaptions({
     return utterances.map((utterance) => {
       const uStart = utterance.start ?? 0
       const uEnd = utterance.end ?? 0
-      
+
       // Filter words for this utterance from the complete list of words if utterance.words is missing
       const rawWords = utterance.words ?? allTranscribedWords.filter(
         (word) => typeof word.start === "number" && typeof word.end === "number" && word.start >= uStart - 0.05 && word.end <= uEnd + 0.05
@@ -1090,7 +825,7 @@ async function generateImageBroll(project: AiVideoProjectRecord, scene: AiVideoS
         },
       ],
       config: {
-        responseModalities: ["TEXT", "IMAGE"],
+        responseModalities: ["IMAGE"],
         imageConfig: {
           aspectRatio: project.screen_size,
           imageSize: "1K",
@@ -1100,14 +835,18 @@ async function generateImageBroll(project: AiVideoProjectRecord, scene: AiVideoS
     const imagePart = response.candidates?.[0]?.content?.parts?.find(
       (part) => "inlineData" in part && part.inlineData?.data
     )
+    const base64Data =
+      imagePart && "inlineData" in imagePart
+        ? imagePart.inlineData?.data
+        : null
 
-    if (!imagePart || !("inlineData" in imagePart) || !imagePart.inlineData?.data) return null
+    if (!base64Data) return null
 
-    const mimeType = imagePart.inlineData.mimeType ?? "image/png"
-    const blob = new Blob([Buffer.from(imagePart.inlineData.data, "base64")], {
+    const mimeType = "image/png"
+    const blob = new Blob([Buffer.from(base64Data, "base64")], {
       type: mimeType,
     })
-    const extension = extensionForMime(mimeType, "png")
+    const extension = "png"
     const url = await uploadBlob({
       userId: project.user_id,
       projectId: project.id,
@@ -1148,16 +887,37 @@ async function fetchStockBroll(project: AiVideoProjectRecord, scene: AiVideoScen
       hits?: Array<{ videos?: { medium?: { url?: string }; small?: { url?: string } }; picture_id?: string }>
     }
     const hit = data.hits?.[0]
-    const mediaUrl = hit?.videos?.medium?.url ?? hit?.videos?.small?.url ?? null
+    let mediaUrl = hit?.videos?.medium?.url ?? hit?.videos?.small?.url ?? null
+    let assetType: AiVideoAssetRecord["asset_type"] = "broll_video"
+    let mimeType = "video/mp4"
+
+    if (!mediaUrl) {
+      // Fallback to stock image search
+      const imgUrl = new URL("https://pixabay.com/api/")
+      imgUrl.searchParams.set("key", process.env.PIXABAY_API_KEY)
+      imgUrl.searchParams.set("q", scene.stock_keyword ?? scene.title)
+      imgUrl.searchParams.set("image_type", "photo")
+      imgUrl.searchParams.set("safesearch", "true")
+
+      const imgResponse = await fetch(imgUrl)
+      if (imgResponse.ok) {
+        const imgData = (await imgResponse.json()) as { hits?: Array<{ largeImageURL?: string; webformatURL?: string }> }
+        const imgHit = imgData.hits?.[0]
+        mediaUrl = imgHit?.largeImageURL ?? imgHit?.webformatURL ?? null
+        assetType = "broll_image"
+        mimeType = "image/jpeg"
+      }
+    }
+
     if (!mediaUrl) return null
 
     return saveAsset({
       projectId: project.id,
       userId: project.user_id,
       sceneId: scene.id,
-      assetType: "broll_video",
+      assetType,
       url: mediaUrl,
-      mimeType: "video/mp4",
+      mimeType,
       provider: "pixabay",
       metadata: { keyword: scene.stock_keyword, pictureId: hit?.picture_id },
     })
@@ -1202,15 +962,15 @@ async function generateVideoBroll(project: AiVideoProjectRecord, scene: AiVideoS
   }
 }
 
-function avatarPlacements(duration: number, scenes: AiVideoSceneRecord[]) {
-  if (duration <= 30) {
+function avatarPlacements(duration: AiVideoAgentDuration, scenes: AiVideoSceneRecord[]) {
+  if (duration === 30) {
     return [{ start: 0, end: 5, sceneId: scenes[0]?.id }]
   }
 
-  if (duration <= 60) {
+  if (duration === 60) {
     return [
       { start: 0, end: 5, sceneId: scenes[0]?.id },
-      { start: Math.round(duration / 2), end: Math.round(duration / 2) + 5, sceneId: scenes[Math.floor(scenes.length / 2)]?.id },
+      { start: 30, end: 35, sceneId: scenes[Math.floor(scenes.length / 2)]?.id },
     ]
   }
 
@@ -1312,10 +1072,7 @@ async function generateAvatarClipAsset({
 }
 
 async function saveAvatarClipAssets(project: AiVideoProjectRecord, scenes: AiVideoSceneRecord[]) {
-  const timelineDuration =
-    Number(scenes[scenes.length - 1]?.end_time ?? project.duration_seconds) ||
-    project.duration_seconds
-  const placements = avatarPlacements(timelineDuration, scenes)
+  const placements = avatarPlacements(project.duration_seconds, scenes)
 
   return Promise.all(
     placements.map((placement, index) =>
@@ -1328,6 +1085,34 @@ async function saveAvatarClipAssets(project: AiVideoProjectRecord, scenes: AiVid
       })
     )
   )
+}
+
+function fallbackIllustrationCode(scene: AiVideoSceneRecord, prompt: string) {
+  const remotionData = (scene.remotion_data ?? {}) as RemotionSceneData
+  const accent = remotionData.accentColor ?? "#14b8a6"
+
+  return `import React from "react";
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+
+export function SceneAnimation({ title = ${JSON.stringify(scene.title)}, summary = ${JSON.stringify(prompt || scene.summary)}, accentColor = ${JSON.stringify(accent)} }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 90 } });
+  const drift = interpolate(frame % 180, [0, 90, 180], [-24, 24, -24]);
+  return (
+    <AbsoluteFill style={{ background: "linear-gradient(135deg,#08111f,#12343b 52%,#271820)", overflow: "hidden", color: "white" }}>
+      <div style={{ position: "absolute", inset: 0, background: \`radial-gradient(circle at 24% 28%, \${accentColor}55, transparent 32%), radial-gradient(circle at 78% 72%, rgba(249,115,22,0.25), transparent 34%)\` }} />
+      <div style={{ position: "absolute", left: "12%", top: "16%", width: "30%", aspectRatio: "1", borderRadius: 999, background: accentColor, opacity: 0.28, transform: \`translateX(\${drift}px)\` }} />
+      <div style={{ position: "absolute", right: "11%", top: "18%", width: "34%", aspectRatio: "1.35", borderRadius: 34, border: "1px solid rgba(255,255,255,0.24)", background: "rgba(255,255,255,0.1)", transform: \`translateY(\${-drift}px) rotate(\${drift / 10}deg)\` }} />
+      <div style={{ position: "absolute", left: "9%", right: "9%", bottom: "12%", opacity: enter, transform: \`translateY(\${interpolate(enter, [0, 1], [42, 0])}px)\` }}>
+        <div style={{ display: "inline-flex", borderRadius: 999, padding: "10px 16px", background: accentColor, color: "#06111f", fontWeight: 900 }}>Scene ${scene.scene_index + 1}</div>
+        <h1 style={{ margin: "22px 0 12px", maxWidth: 1050, fontSize: 76, lineHeight: 0.94, fontWeight: 950 }}>{title}</h1>
+        <p style={{ margin: 0, maxWidth: 940, fontSize: 31, lineHeight: 1.22, color: "rgba(255,255,255,0.78)" }}>{summary}</p>
+      </div>
+    </AbsoluteFill>
+  );
+}
+`
 }
 
 async function generateBrollAssets(
@@ -1346,7 +1131,30 @@ async function generateBrollAssets(
     } else if (project.broll_style === "ai_video") {
       asset = await generateVideoBroll(project, scene)
     } else {
-      asset = await saveIllustrationComponent(project, scene)
+      const source = fallbackIllustrationCode(scene, scene.visual_prompt || scene.summary)
+      const blob = new Blob([source], { type: "text/tsx" })
+      const url = await uploadBlob({
+        userId: project.user_id,
+        projectId: project.id,
+        filename: `scene-${scene.scene_index + 1}-animation.tsx`,
+        blob,
+      })
+
+      asset = await saveAsset({
+        projectId: project.id,
+        userId: project.user_id,
+        sceneId: scene.id,
+        assetType: "remotion_component",
+        url,
+        mimeType: "text/tsx",
+        provider: "remotion-editor",
+        metadata: {
+          prompt: scene.visual_prompt,
+          editMode: "illustration",
+          componentName: "SceneAnimation",
+          illustrationReactCode: source,
+        },
+      })
     }
 
     if (!asset) {
@@ -1354,12 +1162,7 @@ async function generateBrollAssets(
         projectId: project.id,
         userId: project.user_id,
         sceneId: scene.id,
-        assetType:
-          project.broll_style === "ai_video"
-            ? "ai_video"
-            : project.broll_style === "illustration_animation"
-              ? "remotion_component"
-              : "broll_image",
+        assetType: project.broll_style === "ai_video" ? "ai_video" : "broll_image",
         url: project.avatar_image_url,
         mimeType: "image/png",
         provider: "fallback",
@@ -1409,122 +1212,21 @@ async function saveJsonAsset({
   })
 }
 
-async function saveTextAsset({
-  project,
-  sceneId,
-  filename,
-  assetType,
-  value,
-  mimeType,
-  provider,
-  metadata,
-}: {
-  project: AiVideoProjectRecord
-  sceneId?: string | null
-  filename: string
-  assetType: AiVideoAssetRecord["asset_type"]
-  value: string
-  mimeType: string
-  provider: string
-  metadata?: Record<string, unknown>
-}) {
-  const blob = new Blob([value], { type: mimeType })
-  const url = await uploadBlob({
-    userId: project.user_id,
-    projectId: project.id,
-    filename,
-    blob,
-  })
-
-  return saveAsset({
-    projectId: project.id,
-    userId: project.user_id,
-    sceneId: sceneId ?? null,
-    assetType,
-    url,
-    mimeType,
-    provider,
-    metadata: {
-      filename,
-      ...metadata,
-    },
-  })
-}
-
-async function saveIllustrationComponent(
-  project: AiVideoProjectRecord,
-  scene: AiVideoSceneRecord
-) {
-  const remotionData = (scene.remotion_data ?? {}) as RemotionSceneData & {
-    illustrationReactCode?: string
-  }
-  const source: string =
-    remotionData.illustrationReactCode ??
-    (await generateIllustrationReactCode(project, scene)) ??
-    fallbackIllustrationCode(
-      {
-        title: scene.title,
-        summary: scene.summary,
-        startTime: Number(scene.start_time),
-        endTime: Number(scene.end_time),
-        voiceoverSegment: scene.voiceover_segment,
-        captionText: scene.caption_text,
-        brollRequirement: scene.broll_requirement,
-        visualPrompt: scene.visual_prompt ?? scene.summary,
-        stockKeyword: scene.stock_keyword ?? scene.title,
-        remotionData: {
-          layout: "illustration",
-          transition: "fade",
-          captionPosition: "bottom",
-          visualDirection: remotionData.visualDirection ?? "Animated illustration scene.",
-          accentColor: remotionData.accentColor ?? "#14b8a6",
-        },
-      },
-      scene.scene_index
-    )
-
-  return saveTextAsset({
-    project,
-    sceneId: scene.id,
-    filename: `scene-${scene.scene_index + 1}-animation.tsx`,
-    assetType: "remotion_component",
-    value: source,
-    mimeType: "text/tsx",
-    provider: "gemini-remotion",
-    metadata: {
-      componentName: "SceneAnimation",
-      title: scene.title,
-      prompt: scene.visual_prompt,
-      illustrationReactCode: source,
-    },
-  })
-}
-
 function buildComposition({
   project,
   scenes,
   assets,
   captions,
-  timelineDuration,
 }: {
   project: AiVideoProjectRecord
   scenes: AiVideoSceneRecord[]
   assets: AiVideoAssetRecord[]
   captions: CaptionCue[]
-  timelineDuration: number
 }) {
-  const durationSeconds = Math.max(
-    1,
-    Number(timelineDuration) ||
-      Math.max(...captions.map((caption) => caption.end), 0) ||
-      project.duration_seconds
-  )
-
   return {
     id: project.id,
     title: project.title,
-    requestedDurationSeconds: project.duration_seconds,
-    durationSeconds,
+    durationSeconds: project.duration_seconds,
     fps: 30,
     width: project.screen_size === "16:9" ? 1920 : 1080,
     height: project.screen_size === "16:9" ? 1080 : 1920,
@@ -1535,7 +1237,7 @@ function buildComposition({
       id: project.avatar_id,
       name: project.avatar_name,
       imageUrl: project.avatar_image_url,
-      placements: avatarPlacements(durationSeconds, scenes),
+      placements: avatarPlacements(project.duration_seconds, scenes),
     },
     voice: {
       id: project.voice_id,
@@ -1546,242 +1248,11 @@ function buildComposition({
     scenes,
     assets,
     captions,
-    timeline: {
-      source: "deepgram_voice_duration",
-      durationSeconds,
-      lastCaptionEnd: Math.max(...captions.map((caption) => caption.end), 0),
-      lastSceneEnd: Number(scenes[scenes.length - 1]?.end_time ?? 0),
-    },
     transitions: scenes.map((scene) => ({
       sceneId: scene.id,
       transition: (scene.remotion_data as RemotionSceneData | null)?.transition ?? "fade",
     })),
   }
-}
-
-function cleanAndRenameComponent(code: string, index: number): string {
-  // Remove import statements so they don't conflict at the top of the file
-  return code
-    .replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, "")
-    // Remove "export default" or "export" of SceneAnimation and rename it to SceneAnimation_index
-    .replace(/export\s+function\s+SceneAnimation/g, `function SceneAnimation_${index}`)
-    .replace(/export\s+default\s+function\s+SceneAnimation/g, `function SceneAnimation_${index}`)
-    .replace(/function\s+SceneAnimation/g, `function SceneAnimation_${index}`);
-}
-
-function buildProjectRemotionTemplateSource(composition: ReturnType<typeof buildComposition>) {
-  const compositionJson = JSON.stringify(composition, null, 2)
-
-  let inlinedComponents = "";
-  const componentMapEntries: string[] = [];
-
-  composition.scenes.forEach((scene, index) => {
-    const asset = composition.assets.find(
-      (a) => a.scene_id === scene.id && a.asset_type === "remotion_component"
-    );
-    const customCode = asset?.metadata?.illustrationReactCode as string | undefined;
-
-    if (customCode) {
-      try {
-        const cleaned = cleanAndRenameComponent(customCode, index);
-        inlinedComponents += `\n/* Scene ${index + 1} Animation */\n${cleaned}\n`;
-        componentMapEntries.push(`${index}: SceneAnimation_${index}`);
-      } catch {
-        componentMapEntries.push(`${index}: FallbackSceneAnimation`);
-      }
-    } else {
-      componentMapEntries.push(`${index}: FallbackSceneAnimation`);
-    }
-  });
-
-  return `import React from "react";
-import { AbsoluteFill, Audio, Img, Sequence, Video, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-
-const composition = ${compositionJson} as const;
-
-function getSceneAsset(sceneId: string) {
-  return composition.assets.find((asset) =>
-    asset.scene_id === sceneId &&
-    ["broll_image", "broll_video", "ai_video", "remotion_component"].includes(asset.asset_type) &&
-    asset.url
-  );
-}
-
-function activeCaption(frame: number, fps: number) {
-  const seconds = frame / fps;
-  return composition.captions.find((caption) => seconds >= caption.start && seconds < caption.end);
-}
-
-function CaptionLayer() {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const caption = activeCaption(frame, fps);
-  if (!caption) return null;
-
-  return (
-    <div style={{ position: "absolute", left: "7%", right: "7%", bottom: "7%", display: "flex", justifyContent: "center", textAlign: "center", zIndex: 40 }}>
-      <div style={{ maxWidth: "90%", borderRadius: 10, padding: "12px 18px", background: "rgba(0,0,0,0.78)", color: "white", fontSize: 42, lineHeight: 1.05, fontWeight: 900 }}>
-        {caption.text}
-      </div>
-    </div>
-  );
-}
-
-function FallbackSceneAnimation({ title, summary, accentColor }: { title: string; summary: string; accentColor: string }) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 90 } });
-  const drift = interpolate(frame % 180, [0, 90, 180], [-18, 18, -18]);
-  const pulse = interpolate(Math.sin(frame / 14), [-1, 1], [0.72, 1]);
-
-  return (
-    <AbsoluteFill style={{ background: "linear-gradient(135deg, #08111f 0%, #0f2530 52%, #1d1720 100%)", overflow: "hidden" }}>
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 25% 22%, rgba(255,255,255,0.16), transparent 28%), radial-gradient(circle at 78% 70%, rgba(20,184,166,0.2), transparent 32%)" }} />
-      <div style={{ position: "absolute", left: "12%", top: "18%", width: "34%", aspectRatio: "1", borderRadius: "999px", background: accentColor, opacity: 0.22, transform: \`translateX(\${drift}px) scale(\${pulse})\` }} />
-      <div style={{ position: "absolute", right: "10%", bottom: "14%", width: "32%", aspectRatio: "1.25", borderRadius: 28, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.22)", transform: \`translateY(\${-drift}px) rotate(\${drift / 8}deg)\` }} />
-      <div style={{ position: "absolute", left: "10%", right: "10%", bottom: "14%", transform: \`translateY(\${interpolate(enter, [0, 1], [40, 0])}px)\`, opacity: enter }}>
-        <h1 style={{ margin: "22px 0 10px", color: "white", fontSize: 70, lineHeight: 0.96, maxWidth: 980, fontWeight: 900 }}>{title}</h1>
-        <p style={{ margin: 0, color: "rgba(255,255,255,0.78)", fontSize: 30, lineHeight: 1.25, maxWidth: 900 }}>{summary}</p>
-      </div>
-    </AbsoluteFill>
-  );
-}
-
-${inlinedComponents}
-
-const SceneComponents: Record<number, any> = {
-  ${componentMapEntries.join(",\n  ")}
-};
-
-function SceneVisual({ scene, index }: { scene: typeof composition.scenes[number]; index: number }) {
-  const asset = getSceneAsset(scene.id);
-
-  if (asset?.asset_type === "remotion_component") {
-    const Component = SceneComponents[index];
-    if (Component) {
-      return <Component title={scene.title} summary={scene.summary} accentColor={(scene.remotion_data as any)?.accentColor || "#14b8a6"} />;
-    }
-  }
-
-  if (asset?.url && (asset.mime_type || "").startsWith("video/")) {
-    return <Video src={asset.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
-  }
-
-  if (asset?.url && (asset.mime_type || "").startsWith("image/")) {
-    return <Img src={asset.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
-  }
-
-  return (
-    <AbsoluteFill style={{ background: "linear-gradient(135deg, #08111f, #12343b 50%, #271820)", color: "white", alignItems: "center", justifyContent: "center", padding: 96 }}>
-      <h1 style={{ fontSize: 78, lineHeight: 0.95, textAlign: "center" }}>{scene.title}</h1>
-      <p style={{ fontSize: 30, opacity: 0.78, textAlign: "center", maxWidth: 900 }}>{scene.summary}</p>
-    </AbsoluteFill>
-  );
-}
-
-function IntroAvatarLayer() {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const seconds = frame / fps;
-  
-  // Find avatar clip active in the first 5 seconds
-  const activeAvatarAsset = composition.assets.find((asset) => {
-    if (asset.asset_type !== "avatar_clip") return false;
-    const timing = asset.metadata as { start?: number; end?: number } | null;
-    return seconds >= Number(timing?.start ?? -1) && seconds < Number(timing?.end ?? -1);
-  });
-
-  if (activeAvatarAsset?.url && (activeAvatarAsset.mime_type || "").startsWith("video/")) {
-    return (
-      <AbsoluteFill style={{ background: "#080b11", overflow: "hidden" }}>
-        <Video src={activeAvatarAsset.url} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(40px) scale(1.25)", opacity: 0.35 }} muted loop />
-        <Video src={activeAvatarAsset.url} style={{ position: "relative", zIndex: 10, width: "100%", height: "100%", objectFit: "contain" }} muted loop />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent 45%, rgba(0,0,0,0.3))" }} />
-      </AbsoluteFill>
-    );
-  }
-
-  const avatarUrl = composition.avatar.imageUrl;
-  if (!avatarUrl) return null;
-
-  return (
-    <AbsoluteFill style={{ background: "#080b11", overflow: "hidden" }}>
-      <Img src={avatarUrl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(40px) scale(1.25)", opacity: 0.35 }} />
-      <Img src={avatarUrl} style={{ position: "relative", zIndex: 10, width: "100%", height: "100%", objectFit: "contain" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent 45%, rgba(0,0,0,0.3))" }} />
-    </AbsoluteFill>
-  );
-}
-
-function AvatarLayer() {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const seconds = frame / fps;
-
-  // PIP only shows after 5 seconds
-  if (seconds < 5) return null;
-
-  const placement = composition.avatar.placements.find((item) => seconds >= item.start && seconds < item.end);
-  if (!placement) return null;
-
-  // Find active avatar clip if any
-  const activeAvatarAsset = composition.assets.find((asset) => {
-    if (asset.asset_type !== "avatar_clip") return false;
-    const timing = asset.metadata as { start?: number; end?: number } | null;
-    return seconds >= Number(timing?.start ?? -1) && seconds < Number(timing?.end ?? -1);
-  });
-
-  const url = activeAvatarAsset?.url || composition.avatar.imageUrl;
-  if (!url) return null;
-
-  const isVideo = activeAvatarAsset?.url && (activeAvatarAsset.mime_type || "").startsWith("video/");
-
-  return (
-    <div style={{ position: "absolute", right: "5%", bottom: "13%", width: composition.screenSize === "9:16" ? "34%" : "24%", aspectRatio: "9 / 12", borderRadius: 18, overflow: "hidden", border: "2px solid rgba(255,255,255,0.72)", background: "black", zIndex: 20 }}>
-      {isVideo ? (
-        <Video src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted loop />
-      ) : (
-        <Img src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      )}
-    </div>
-  );
-}
-
-export function AiVideoAgentComposition() {
-  const { fps } = useVideoConfig();
-  return (
-    <AbsoluteFill style={{ background: "#020617", overflow: "hidden" }}>
-      {composition.voice.voiceoverUrl ? <Audio src={composition.voice.voiceoverUrl} /> : null}
-      
-      {/* Intro section: Full-screen Avatar for first 5 seconds */}
-      <Sequence from={0} durationInFrames={Math.floor(5 * fps)}>
-        <IntroAvatarLayer />
-      </Sequence>
-
-      {/* Main scenes section (starts exactly after 5 seconds) */}
-      {composition.scenes.map((scene, index) => {
-        const sceneStart = Number(scene.start_time);
-        const sceneEnd = Number(scene.end_time);
-        const visualStartBoundary = 5;
-        if (sceneEnd <= visualStartBoundary) return null;
-
-        const adjustedStart = Math.max(visualStartBoundary, sceneStart);
-        const from = Math.floor(adjustedStart * fps);
-        const durationInFrames = Math.max(1, Math.ceil((sceneEnd - adjustedStart) * fps));
-        return (
-          <Sequence key={scene.id} from={from} durationInFrames={durationInFrames}>
-            <SceneVisual scene={scene} index={index} />
-          </Sequence>
-        );
-      })}
-      
-      <AbsoluteFill style={{ background: "linear-gradient(to top, rgba(0,0,0,0.62), transparent 45%, rgba(0,0,0,0.24))", pointerEvents: "none" }} />
-      <AvatarLayer />
-      <CaptionLayer />
-    </AbsoluteFill>
-  );
-}
-`
 }
 
 export const generateAiVideoAgentTask = task({
@@ -1801,19 +1272,14 @@ export const generateAiVideoAgentTask = task({
 
       await setDbStage(payload.projectId, payload.userId, "breaking_script_into_scenes", 20, "Breaking script into scenes.")
       const scenePlans = await analyzeScenes(project, script)
+      const scenes = await saveScenes(project, scenePlans)
 
-      await setDbStage(
-        payload.projectId,
-        payload.userId,
-        "generating_prompts",
-        30,
-        `Generating ${project.broll_style.replaceAll("_", " ")} prompts from the script.`
-      )
-      const assetPromptPlans = await generateAssetPromptPlans(project, scenePlans, script)
-      const plannedScenePlans = applyAssetPromptPlans(scenePlans, assetPromptPlans)
-      const scenes = await saveScenes(project, plannedScenePlans)
+      await setDbStage(payload.projectId, payload.userId, "generating_prompts", 30, "Generating visual prompts and Remotion scene plans.")
 
-      await setDbStage(payload.projectId, payload.userId, "generating_voiceover", 42, "Generating voiceover.")
+      await setDbStage(payload.projectId, payload.userId, "generating_avatar_clips", 40, "Placing avatar clips on the timeline.")
+      const avatarAssets = await saveAvatarClipAssets(project, scenes)
+
+      await setDbStage(payload.projectId, payload.userId, "generating_voiceover", 52, "Generating voiceover.")
       const voiceover = await generateVoiceover(project, script)
       const voiceExt = extensionForMime(voiceover.type, "mp3")
       const voiceoverUrl = await uploadBlob({
@@ -1833,7 +1299,7 @@ export const generateAiVideoAgentTask = task({
       await updateProject(project.id, project.user_id, { voiceover_url: voiceoverUrl })
       project = { ...project, voiceover_url: voiceoverUrl }
 
-      await setDbStage(payload.projectId, payload.userId, "generating_captions", 58, "Generating accurate captions from the voiceover.")
+      await setDbStage(payload.projectId, payload.userId, "generating_captions", 64, "Generating accurate captions.")
       const captions = await transcribeCaptions({ project, voiceoverUrl, scenes })
 
       // Align scene timings to the transcribed words
@@ -1848,22 +1314,20 @@ export const generateAiVideoAgentTask = task({
       const originalWords = script.split(/\s+/).filter(Boolean)
 
       // Align original words sequentially to the transcribed timings (1-to-1 sequential mapping)
-      let lastEnd = 0
       const timedWords = originalWords.map((word, idx) => {
         const matchingTranscribed = allWords[idx]
         if (matchingTranscribed) {
-          lastEnd = matchingTranscribed.end
           return {
             word,
             start: matchingTranscribed.start,
             end: matchingTranscribed.end,
           }
         }
-        
+
         // Extrapolate timing smoothly if Deepgram missed a word or ended early
-        const start = lastEnd + 0.05
+        const prevWord = idx > 0 ? allWords[idx - 1] : null
+        const start = prevWord ? prevWord.end + 0.05 : idx * 0.3
         const end = start + 0.3
-        lastEnd = end
         return {
           word,
           start,
@@ -1946,39 +1410,16 @@ export const generateAiVideoAgentTask = task({
       })
       await updateProject(project.id, project.user_id, { captions: finalCaptions })
 
-      const voiceDuration = finalCaptions[finalCaptions.length - 1]?.end ?? 0
-      const timelineDuration =
-        voiceDuration ||
-        Number(alignedScenes[alignedScenes.length - 1]?.end_time ?? 0) ||
-        project.duration_seconds
-
-      await setDbStage(payload.projectId, payload.userId, "fetching_or_generating_broll", 74, "Fetching or generating assigned scene assets.")
+      await setDbStage(payload.projectId, payload.userId, "fetching_or_generating_broll", 74, "Fetching or generating B-roll.")
       const brollAssets = await generateBrollAssets(project, alignedScenes)
-
-      await setDbStage(payload.projectId, payload.userId, "generating_avatar_clips", 82, "Placing avatar clips on the voice-timed timeline.")
-      const avatarAssets = await saveAvatarClipAssets(project, alignedScenes)
       const allAssets = [...avatarAssets, ...brollAssets]
 
-      await setDbStage(payload.projectId, payload.userId, "creating_remotion_composition", 88, "Creating Remotion composition from voice, captions, scenes, and assets.")
+      await setDbStage(payload.projectId, payload.userId, "creating_remotion_composition", 86, "Creating Remotion composition.")
       const composition = buildComposition({
         project,
         scenes: alignedScenes,
         assets: allAssets,
         captions: finalCaptions,
-        timelineDuration,
-      })
-      await saveTextAsset({
-        project,
-        filename: "remotion-composition.tsx",
-        assetType: "remotion_component",
-        value: buildProjectRemotionTemplateSource(composition),
-        mimeType: "text/tsx",
-        provider: "remotion-template",
-        metadata: {
-          componentName: "AiVideoAgentComposition",
-          durationSeconds: composition.durationSeconds,
-          fps: composition.fps,
-        },
       })
       const compositionAsset = await saveJsonAsset({
         project,

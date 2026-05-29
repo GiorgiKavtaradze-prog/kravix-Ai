@@ -279,3 +279,4 @@ export function buildAiVideoAgentObjectKey(
 ) {
   return `${userId}/ai-video-agent/${projectId}/${safeFilename(filename, "asset")}`
 }
+
