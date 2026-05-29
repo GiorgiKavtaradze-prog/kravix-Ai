@@ -3,17 +3,27 @@ import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
 
 import { avatarStyles, type AvatarStyle } from "@/lib/avatars"
+import {
+  AVATAR_GENERATION_CREDITS,
+  assertHasCredits,
+  debitCredits,
+} from "@/lib/credits"
+import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
 export async function POST(request: Request) {
+  const { client, user, error } = await getAuthenticatedInsForgeClient(request)
+
+  if (error || !client || !user) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+
   const {
     avatarId,
-    userId,
     sourceImageUrl,
     style,
     prompt,
   } = (await request.json()) as {
     avatarId?: string
-    userId?: string
     sourceImageUrl?: string
     style?: string
     prompt?: string | null
@@ -26,7 +36,7 @@ export async function POST(request: Request) {
     )
   }
 
-  if (!avatarId || !userId || !sourceImageUrl) {
+  if (!avatarId || !sourceImageUrl) {
     return NextResponse.json(
       { error: "Missing avatar generation details." },
       { status: 400 }
@@ -37,17 +47,37 @@ export async function POST(request: Request) {
   const trimmedPrompt =
     typeof prompt === "string" && prompt.trim() ? prompt.trim() : null
 
+  try {
+    await assertHasCredits(
+      client,
+      user.id,
+      AVATAR_GENERATION_CREDITS,
+      "Not enough credits for this avatar generation."
+    )
+  } catch (creditError) {
+    return NextResponse.json(
+      {
+        error:
+          creditError instanceof Error
+            ? creditError.message
+            : "Not enough credits for this avatar generation.",
+      },
+      { status: creditError instanceof Error && creditError.name === "InsufficientCreditsError" ? 402 : 409 }
+    )
+  }
+
   const handle = await tasks.trigger<typeof generateAvatarTask>(
     "generate-avatar",
     {
       avatarId,
-      userId,
+      userId: user.id,
       sourceImageUrl,
       style: avatarStyle,
       prompt: trimmedPrompt,
+      creditsCharged: AVATAR_GENERATION_CREDITS,
     },
     {
-      tags: [`user:${userId}`, `avatar:${avatarId}`],
+      tags: [`user:${user.id}`, `avatar:${avatarId}`],
     },
     {
       publicAccessToken: {
@@ -56,9 +86,19 @@ export async function POST(request: Request) {
     }
   )
 
+  const debitedCredits = await debitCredits({
+    client,
+    userId: user.id,
+    credits: AVATAR_GENERATION_CREDITS,
+    description: "AI avatar generation",
+    referenceId: avatarId,
+  })
+
   return NextResponse.json({
     avatarId,
     runId: handle.id,
     publicAccessToken: handle.publicAccessToken,
+    credits: AVATAR_GENERATION_CREDITS,
+    balance: debitedCredits.balance,
   })
 }

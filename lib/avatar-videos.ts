@@ -1,4 +1,5 @@
 import type { AvatarRecord } from "@/lib/avatars"
+import { calculateAvatarVideoCredits as calculateCreditsForDuration } from "@/lib/credits"
 import type { VoiceType } from "@/lib/voices"
 
 export type AvatarVideoStatus =
@@ -66,11 +67,11 @@ export const avatarVideoTones = [
 ] as const
 
 export const avatarVideoCreditCosts: Record<AvatarVideoDuration, number> = {
-  5: 25,
-  10: 40,
-  20: 90,
-  30: 140,
-  60: 300,
+  5: 40,
+  10: 100,
+  20: 200,
+  30: 300,
+  60: 600,
 }
 
 export function isAvatarVideoDuration(
@@ -88,7 +89,7 @@ export function isScriptTone(value: unknown): value is ScriptTone {
 }
 
 export function calculateAvatarVideoCredits(duration: AvatarVideoDuration) {
-  return avatarVideoCreditCosts[duration]
+  return calculateCreditsForDuration(duration)
 }
 
 export function getAvatarImageForRatio(

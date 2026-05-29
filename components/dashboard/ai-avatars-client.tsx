@@ -20,7 +20,9 @@ import {
   type AvatarStyle,
   type DefaultAvatar,
 } from "@/lib/avatars"
+import { AVATAR_GENERATION_CREDITS, type CreditBalance } from "@/lib/credits"
 import { insforge } from "@/lib/insforge/client"
+import { getInsforgeAuthHeaders } from "@/lib/insforge/client-auth-headers"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -289,6 +291,7 @@ export function AiAvatarsClient({
   initialAvatars: AvatarRecord[]
 }) {
   const [avatars, setAvatars] = React.useState(initialAvatars)
+  const [credits, setCredits] = React.useState<CreditBalance | null>(null)
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [style, setStyle] = React.useState<AvatarStyle>("Podcast")
@@ -341,6 +344,8 @@ export function AiAvatarsClient({
       : null)
   const hasGeneratedImages = Boolean(generated16x9Url && generated9x16Url)
   const canSubmit = Boolean(selectedFile) && !isUploading && !isGenerating
+  const canGenerate =
+    canSubmit && (credits?.balance ?? 0) >= AVATAR_GENERATION_CREDITS
 
   React.useEffect(() => {
     return () => {
@@ -368,18 +373,30 @@ export function AiAvatarsClient({
         throw new Error(authError?.message ?? "Unable to verify the current user.")
       }
 
-      const { data, error } = await insforge.database
+      const [avatarsResult, creditResponse] = await Promise.all([
+        insforge.database
         .from("avatars")
         .select("*")
         .eq("user_id", authData.user.id)
-        .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false }),
+        fetch("/api/credits", { headers: await getInsforgeAuthHeaders() }),
+      ])
+      const creditData = (await creditResponse.json()) as {
+        credits?: CreditBalance
+        error?: string
+      }
 
-      if (error) {
-        throw new Error(error.message)
+      if (avatarsResult.error) {
+        throw new Error(avatarsResult.error.message)
+      }
+
+      if (!creditResponse.ok || !creditData.credits) {
+        throw new Error(creditData.error ?? "Unable to load credits.")
       }
 
       setError(null)
-      setAvatars((data ?? []) as AvatarRecord[])
+      setAvatars((avatarsResult.data ?? []) as AvatarRecord[])
+      setCredits(creditData.credits)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to refresh avatars."
@@ -543,6 +560,7 @@ export function AiAvatarsClient({
       const response = await fetch("/api/avatars/generate", {
         method: "POST",
         headers: {
+          ...(await getInsforgeAuthHeaders()),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -558,6 +576,7 @@ export function AiAvatarsClient({
         avatarId?: string
         runId?: string
         publicAccessToken?: string
+        balance?: number
         error?: string
       }
 
@@ -567,10 +586,19 @@ export function AiAvatarsClient({
         !data.runId ||
         !data.publicAccessToken
       ) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start avatar generation.")
       }
 
       setAvatars((current) => [data.avatar ?? avatar, ...current])
+      if (typeof data.balance === "number") {
+        setCredits((current) =>
+          current ? { ...current, balance: data.balance! } : current
+        )
+      }
       setSelectedAvatarId(avatar.id)
       setGeneration({
         avatarId: data.avatarId,
@@ -846,6 +874,21 @@ export function AiAvatarsClient({
                   {error}
                 </div>
               ) : null}
+
+              <div className="grid gap-3 rounded-xl border border-border bg-muted/30 p-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">AI generation</p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {AVATAR_GENERATION_CREDITS} credits
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Available</p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {credits?.balance ?? 0} credits
+                  </p>
+                </div>
+              </div>
             </div>
 
             {generation ? (
@@ -947,7 +990,7 @@ export function AiAvatarsClient({
               </Button>
               <Button
                 onClick={() => void submitGeneration()}
-                disabled={!canSubmit}
+                disabled={!canGenerate}
               >
                 {isGenerating ? (
                   <Loader2Icon className="animate-spin" />

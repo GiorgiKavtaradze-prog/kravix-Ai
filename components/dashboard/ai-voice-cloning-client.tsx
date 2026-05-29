@@ -26,7 +26,6 @@ import { toast } from "sonner"
 
 import {
   TTS_MAX_CHARACTERS,
-  calculateTtsCredits,
   defaultDeepgramVoices,
   type CreditBalance,
   type DefaultVoice,
@@ -34,6 +33,11 @@ import {
   type VoiceRecord,
   type VoiceType,
 } from "@/lib/voices"
+import {
+  VOICE_CLONING_CREDITS,
+  calculateTtsCreditsForText,
+  countBillableWords,
+} from "@/lib/credits"
 import { insforge } from "@/lib/insforge/client"
 import { cn } from "@/lib/utils"
 import {
@@ -535,11 +539,13 @@ export function AiVoiceCloningClient() {
     })),
   ]
   const ttsCharacterCount = ttsText.trim().length
-  const ttsCredits = calculateTtsCredits(ttsCharacterCount)
+  const ttsWordCount = countBillableWords(ttsText)
+  const ttsCredits = calculateTtsCreditsForText(ttsText)
   const canStartClone =
     Boolean(voiceName.trim()) &&
     Boolean(voiceSample) &&
     hasConsent &&
+    (credits?.balance ?? 0) >= VOICE_CLONING_CREDITS &&
     !isStartingClone
   const canStartTts =
     Boolean(ttsVoiceValue) &&
@@ -703,6 +709,10 @@ export function AiVoiceCloningClient() {
       }
 
       if (!response.ok || !data.voiceId || !data.runId || !data.publicAccessToken) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start voice cloning.")
       }
 
@@ -767,6 +777,10 @@ export function AiVoiceCloningClient() {
         !data.runId ||
         !data.publicAccessToken
       ) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start text to speech generation.")
       }
 
@@ -1078,7 +1092,7 @@ export function AiVoiceCloningClient() {
                   Generated speech
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  TTS generations cost 10 credits per 500 characters.
+                  TTS generations cost 10 credits per 500 words.
                 </p>
               </div>
               <Button
@@ -1236,6 +1250,21 @@ export function AiVoiceCloningClient() {
                 I have permission to upload and clone this voice sample.
               </span>
             </label>
+
+            <div className="grid gap-3 rounded-xl border border-border bg-muted/30 p-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">This request</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {VOICE_CLONING_CREDITS} credits
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Available</p>
+                <p className="mt-1 text-sm font-semibold">
+                  {credits?.balance ?? 0} credits
+                </p>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -1294,7 +1323,7 @@ export function AiVoiceCloningClient() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <Label htmlFor="tts-text">Text</Label>
-                <span
+              <span
                   className={cn(
                     "text-xs tabular-nums text-muted-foreground",
                     ttsCharacterCount > TTS_MAX_CHARACTERS && "text-destructive"
@@ -1317,13 +1346,13 @@ export function AiVoiceCloningClient() {
               <div>
                 <p className="text-xs text-muted-foreground">Pricing</p>
                 <p className="mt-1 text-sm font-semibold">
-                  10 credits per 500 characters
+                  10 credits per 500 words
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">This request</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {ttsCredits} credits
+                  {ttsCredits} credits for {ttsWordCount} words
                 </p>
               </div>
               <div>

@@ -4,11 +4,15 @@ import { NextResponse } from "next/server"
 
 import {
   TTS_MAX_CHARACTERS,
-  calculateTtsCredits,
   getDefaultVoice,
   type TtsGenerationRecord,
   type VoiceType,
 } from "@/lib/voices"
+import {
+  assertHasCredits,
+  calculateTtsCreditsForText,
+  debitCredits,
+} from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
 export async function POST(request: Request) {
@@ -81,26 +85,29 @@ export async function POST(request: Request) {
     voiceName = String(customVoice.name)
   }
 
-  const credits = calculateTtsCredits(trimmedText.length)
-  const { data: creditRow, error: creditError } = await client.database
-    .from("user_credits")
-    .select("*")
-    .eq("user_id", user.id)
-    .single()
-
-  if (creditError || !creditRow) {
-    return NextResponse.json(
-      { error: "Credit balance is not ready. Refresh and try again." },
-      { status: 400 }
+  const credits = calculateTtsCreditsForText(trimmedText)
+  try {
+    await assertHasCredits(
+      client,
+      user.id,
+      credits,
+      "Not enough credits for this text to speech generation."
     )
-  }
-
-  const currentBalance = Number(creditRow.balance ?? 0)
-
-  if (currentBalance < credits) {
+  } catch (creditError) {
     return NextResponse.json(
-      { error: "Not enough credits for this text to speech generation." },
-      { status: 402 }
+      {
+        error:
+          creditError instanceof Error
+            ? creditError.message
+            : "Not enough credits for this text to speech generation.",
+      },
+      {
+        status:
+          creditError instanceof Error &&
+          creditError.name === "InsufficientCreditsError"
+            ? 402
+            : 409,
+      }
     )
   }
 
@@ -128,39 +135,6 @@ export async function POST(request: Request) {
     )
   }
 
-  const { data: debitedCredits, error: debitError } = await client.database
-    .from("user_credits")
-    .update({ balance: currentBalance - credits })
-    .eq("user_id", user.id)
-    .eq("balance", currentBalance)
-    .select("*")
-    .single()
-
-  if (debitError || !debitedCredits) {
-    await client.database
-      .from("voice_tts_generations")
-      .update({
-        status: "failed",
-        error_message: "Unable to deduct credits. Try again.",
-      })
-      .eq("id", generationId)
-      .eq("user_id", user.id)
-
-    return NextResponse.json(
-      { error: debitError?.message ?? "Unable to deduct credits. Try again." },
-      { status: 409 }
-    )
-  }
-
-  await client.database.from("credit_transactions").insert({
-    id: crypto.randomUUID(),
-    user_id: user.id,
-    amount: -credits,
-    type: "debit",
-    description: `Voice TTS generation with ${voiceName}`,
-    reference_id: generationId,
-  })
-
   const handle = await tasks.trigger<typeof generateVoiceTtsTask>(
     "generate-voice-tts",
     {
@@ -187,6 +161,14 @@ export async function POST(request: Request) {
     .eq("id", generationId)
     .eq("user_id", user.id)
 
+  const debitedCredits = await debitCredits({
+    client,
+    userId: user.id,
+    credits,
+    description: `Voice TTS generation with ${voiceName}`,
+    referenceId: generationId,
+  })
+
   return NextResponse.json({
     generation: {
       ...(generation as TtsGenerationRecord),
@@ -196,7 +178,7 @@ export async function POST(request: Request) {
     runId: handle.id,
     publicAccessToken: handle.publicAccessToken,
     credits,
-    balance: Number(debitedCredits.balance ?? currentBalance - credits),
+    balance: Number(debitedCredits.balance),
   })
 }
 

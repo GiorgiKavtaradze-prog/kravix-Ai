@@ -1,4 +1,8 @@
 import type { AvatarRecord } from "@/lib/avatars"
+import {
+  AI_VIDEO_AGENT_IMAGE_CREDITS,
+  AI_VIDEO_AGENT_VIDEO_CREDITS,
+} from "@/lib/credits"
 import type { VoiceType } from "@/lib/voices"
 
 export type AiVideoAgentStatus =
@@ -207,14 +211,14 @@ export function calculateAiVideoAgentCredits({
   }
 
   if (brollStyle === "ai_images") {
-    return scenes * 5
+    return scenes * AI_VIDEO_AGENT_IMAGE_CREDITS
   }
 
   if (brollStyle === "ai_video") {
-    return scenes * 10
+    return scenes * AI_VIDEO_AGENT_VIDEO_CREDITS
   }
 
-  return scenes * 7
+  return scenes * AI_VIDEO_AGENT_IMAGE_CREDITS
 }
 
 export function formatAiVideoDuration(duration: number) {
@@ -279,4 +283,3 @@ export function buildAiVideoAgentObjectKey(
 ) {
   return `${userId}/ai-video-agent/${projectId}/${safeFilename(filename, "asset")}`
 }
-

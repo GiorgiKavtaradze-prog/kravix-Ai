@@ -1,58 +1,12 @@
 import { NextResponse } from "next/server"
 
 import {
-  STARTING_VOICE_CREDITS,
   defaultDeepgramVoices,
-  type CreditBalance,
   type TtsGenerationRecord,
   type VoiceRecord,
 } from "@/lib/voices"
+import { ensureCreditBalance } from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
-
-async function ensureCreditBalance(
-  client: NonNullable<Awaited<ReturnType<typeof getAuthenticatedInsForgeClient>>["client"]>,
-  userId: string
-) {
-  const { data, error } = await client.database
-    .from("user_credits")
-    .select("*")
-    .eq("user_id", userId)
-    .single()
-
-  if (!error && data) {
-    return data as CreditBalance
-  }
-
-  const { data: created, error: insertError } = await client.database
-    .from("user_credits")
-    .insert({
-      user_id: userId,
-      balance: STARTING_VOICE_CREDITS,
-    })
-    .select("*")
-    .single()
-
-  if (insertError) {
-    // If the insert failed (e.g. unique key violation from concurrent request), try to fetch the credit row again.
-    const { data: retryData, error: retryError } = await client.database
-      .from("user_credits")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-
-    if (!retryError && retryData) {
-      return retryData as CreditBalance
-    }
-
-    throw new Error(insertError.message ?? "Unable to create credit balance.")
-  }
-
-  if (!created) {
-    throw new Error("Unable to create credit balance.")
-  }
-
-  return created as CreditBalance
-}
 
 export async function GET(request: Request) {
   const { client, user, error } = await getAuthenticatedInsForgeClient(request)

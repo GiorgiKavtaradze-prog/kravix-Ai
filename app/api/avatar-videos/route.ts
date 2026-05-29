@@ -13,12 +13,15 @@ import {
   type ScriptTone,
 } from "@/lib/avatar-videos"
 import { defaultAvatars, type AvatarRecord } from "@/lib/avatars"
+import {
+  assertHasCredits,
+  debitCredits,
+  ensureCreditBalance,
+} from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 import {
-  STARTING_VOICE_CREDITS,
   defaultDeepgramVoices,
   getDefaultVoice,
-  type CreditBalance,
   type VoiceRecord,
   type VoiceType,
 } from "@/lib/voices"
@@ -84,51 +87,6 @@ async function resolveAvatar(
   }
 
   return savedAvatar as AvatarRecord
-}
-
-async function ensureCreditBalance(
-  client: NonNullable<Awaited<ReturnType<typeof getAuthenticatedInsForgeClient>>["client"]>,
-  userId: string
-) {
-  const { data, error } = await client.database
-    .from("user_credits")
-    .select("*")
-    .eq("user_id", userId)
-    .single()
-
-  if (!error && data) {
-    return data as CreditBalance
-  }
-
-  const { data: created, error: insertError } = await client.database
-    .from("user_credits")
-    .insert({
-      user_id: userId,
-      balance: STARTING_VOICE_CREDITS,
-    })
-    .select("*")
-    .single()
-
-  if (insertError) {
-    // If the insert failed (e.g. unique key violation from concurrent request), try to fetch the credit row again.
-    const { data: retryData, error: retryError } = await client.database
-      .from("user_credits")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-
-    if (!retryError && retryData) {
-      return retryData as CreditBalance
-    }
-
-    throw new Error(insertError.message ?? "Unable to create credit balance.")
-  }
-
-  if (!created) {
-    throw new Error("Unable to create credit balance.")
-  }
-
-  return created as CreditBalance
 }
 
 export async function GET(request: Request) {
@@ -313,25 +271,28 @@ export async function POST(request: Request) {
   }
 
   const credits = calculateAvatarVideoCredits(body.durationSeconds)
-  const { data: creditRow, error: creditError } = await client.database
-    .from("user_credits")
-    .select("*")
-    .eq("user_id", user.id)
-    .single()
-
-  if (creditError || !creditRow) {
-    return NextResponse.json(
-      { error: "Credit balance is not ready. Refresh and try again." },
-      { status: 400 }
+  try {
+    await assertHasCredits(
+      client,
+      user.id,
+      credits,
+      "Not enough credits for this avatar video."
     )
-  }
-
-  const currentBalance = Number(creditRow.balance ?? 0)
-
-  if (currentBalance < credits) {
+  } catch (creditError) {
     return NextResponse.json(
-      { error: "Not enough credits for this avatar video." },
-      { status: 402 }
+      {
+        error:
+          creditError instanceof Error
+            ? creditError.message
+            : "Not enough credits for this avatar video.",
+      },
+      {
+        status:
+          creditError instanceof Error &&
+          creditError.name === "InsufficientCreditsError"
+            ? 402
+            : 409,
+      }
     )
   }
 
@@ -369,39 +330,6 @@ export async function POST(request: Request) {
     )
   }
 
-  const { data: debitedCredits, error: debitError } = await client.database
-    .from("user_credits")
-    .update({ balance: currentBalance - credits })
-    .eq("user_id", user.id)
-    .eq("balance", currentBalance)
-    .select("*")
-    .single()
-
-  if (debitError || !debitedCredits) {
-    await client.database
-      .from("avatar_videos")
-      .update({
-        status: "failed",
-        error_message: "Unable to deduct credits. Try again.",
-      })
-      .eq("id", videoId)
-      .eq("user_id", user.id)
-
-    return NextResponse.json(
-      { error: debitError?.message ?? "Unable to deduct credits. Try again." },
-      { status: 409 }
-    )
-  }
-
-  await client.database.from("credit_transactions").insert({
-    id: crypto.randomUUID(),
-    user_id: user.id,
-    amount: -credits,
-    type: "debit",
-    description: `Avatar video generation: ${title}`,
-    reference_id: videoId,
-  })
-
   const handle = await tasks.trigger<typeof generateAvatarVideoTask>(
     "generate-avatar-video",
     {
@@ -425,6 +353,14 @@ export async function POST(request: Request) {
     .eq("id", videoId)
     .eq("user_id", user.id)
 
+  const debitedCredits = await debitCredits({
+    client,
+    userId: user.id,
+    credits,
+    description: `Avatar video generation: ${title}`,
+    referenceId: videoId,
+  })
+
   return NextResponse.json({
     video: {
       ...(video as AvatarVideoRecord),
@@ -434,6 +370,6 @@ export async function POST(request: Request) {
     runId: handle.id,
     publicAccessToken: handle.publicAccessToken,
     credits,
-    balance: Number(debitedCredits.balance ?? currentBalance - credits),
+    balance: Number(debitedCredits.balance),
   })
 }

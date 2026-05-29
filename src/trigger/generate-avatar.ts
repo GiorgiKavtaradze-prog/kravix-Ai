@@ -10,6 +10,7 @@ type GenerateAvatarPayload = {
   sourceImageUrl: string
   style: AvatarStyle
   prompt: string | null
+  creditsCharged: number
 }
 
 type ProgressStage =
@@ -45,6 +46,41 @@ async function updateAvatar(
   if (error) {
     throw new Error(error.message)
   }
+}
+
+async function refundCredits({
+  userId,
+  avatarId,
+  credits,
+}: {
+  userId: string
+  avatarId: string
+  credits: number
+}) {
+  if (credits <= 0) return
+
+  const client = createInsForgeServerClient()
+  const { data: creditRow } = await client.database
+    .from("user_credits")
+    .select("balance")
+    .eq("user_id", userId)
+    .single()
+
+  if (!creditRow) return
+
+  await client.database
+    .from("user_credits")
+    .update({ balance: Number(creditRow.balance ?? 0) + credits })
+    .eq("user_id", userId)
+
+  await client.database.from("credit_transactions").insert({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    amount: credits,
+    type: "refund",
+    description: "Refund for failed AI avatar generation",
+    reference_id: avatarId,
+  })
 }
 
 async function fetchSourceImage(url: string) {
@@ -110,7 +146,7 @@ async function generateImage({
   aspectRatio: "16:9" | "9:16"
 }) {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
+    model: "gemini-2.5-flash",
     contents: [
       { text: buildPrompt(style, prompt, aspectRatio) },
       {
@@ -244,6 +280,11 @@ export const generateAvatarTask = task({
       await setProgress("failed", 100, message)
       await updateAvatar(payload.avatarId, payload.userId, {
         status: "failed",
+      })
+      await refundCredits({
+        userId: payload.userId,
+        avatarId: payload.avatarId,
+        credits: payload.creditsCharged,
       })
 
       throw error

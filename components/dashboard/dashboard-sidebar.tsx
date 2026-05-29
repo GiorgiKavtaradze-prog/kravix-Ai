@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/sidebar"
 import { getCurrentUserProfile } from "@/lib/insforge/sync-user-profile"
 import { insforge } from "@/lib/insforge/client"
+import { getInsforgeAuthHeaders } from "@/lib/insforge/client-auth-headers"
 import { Button } from "@/components/ui/button"
 import type { UserProfile } from "@/lib/users"
 
@@ -100,15 +101,24 @@ function getInitials(profile: UserProfile | null) {
 export function DashboardSidebar() {
   const pathname = usePathname()
   const [profile, setProfile] = React.useState<UserProfile | null>(null)
+  const [creditBalance, setCreditBalance] = React.useState<number | null>(null)
 
   React.useEffect(() => {
     let isMounted = true
 
     async function loadProfile() {
-      const userProfile = await getCurrentUserProfile()
+      const [userProfile, headers] = await Promise.all([
+        getCurrentUserProfile(),
+        getInsforgeAuthHeaders(),
+      ])
+      const response = await fetch("/api/credits", { headers })
+      const data = (await response.json()) as {
+        credits?: { balance?: number }
+      }
 
       if (isMounted) {
         setProfile(userProfile)
+        setCreditBalance(Number(data.credits?.balance ?? 0))
       }
     }
 
@@ -212,7 +222,9 @@ export function DashboardSidebar() {
               <BadgeDollarSignIcon className="size-4" />
               Available credits
             </span>
-            <span className="font-semibold text-sidebar-foreground">2,480</span>
+            <span className="font-semibold text-sidebar-foreground">
+              {creditBalance === null ? "----" : creditBalance.toLocaleString()}
+            </span>
           </div>
         </div>
         <div className="hidden flex-col items-center gap-2 group-data-[collapsible=icon]:flex">

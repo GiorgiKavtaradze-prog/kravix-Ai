@@ -7,6 +7,11 @@ import {
   defaultDeepgramVoices,
   type VoiceRecord,
 } from "@/lib/voices"
+import {
+  VOICE_CLONING_CREDITS,
+  assertHasCredits,
+  debitCredits,
+} from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
 export async function POST(request: Request) {
@@ -46,6 +51,31 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Voice sample must be an audio file." },
       { status: 400 }
+    )
+  }
+
+  try {
+    await assertHasCredits(
+      client,
+      user.id,
+      VOICE_CLONING_CREDITS,
+      "Not enough credits for this voice cloning request."
+    )
+  } catch (creditError) {
+    return NextResponse.json(
+      {
+        error:
+          creditError instanceof Error
+            ? creditError.message
+            : "Not enough credits for this voice cloning request.",
+      },
+      {
+        status:
+          creditError instanceof Error &&
+          creditError.name === "InsufficientCreditsError"
+            ? 402
+            : 409,
+      }
     )
   }
 
@@ -90,6 +120,7 @@ export async function POST(request: Request) {
       voiceId,
       userId: user.id,
       sampleUrl,
+      creditsCharged: VOICE_CLONING_CREDITS,
     },
     {
       tags: [`user:${user.id}`, `voice:${voiceId}`],
@@ -107,11 +138,21 @@ export async function POST(request: Request) {
     .eq("id", voiceId)
     .eq("user_id", user.id)
 
+  const debitedCredits = await debitCredits({
+    client,
+    userId: user.id,
+    credits: VOICE_CLONING_CREDITS,
+    description: `Voice cloning request: ${name.trim()}`,
+    referenceId: voiceId,
+  })
+
   return NextResponse.json({
     voice: { ...(voice as VoiceRecord), trigger_run_id: handle.id },
     voiceId,
     runId: handle.id,
     publicAccessToken: handle.publicAccessToken,
+    credits: VOICE_CLONING_CREDITS,
+    balance: debitedCredits.balance,
   })
 }
 

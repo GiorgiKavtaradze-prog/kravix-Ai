@@ -14,12 +14,15 @@ import {
   type AiVideoProjectRecord,
 } from "@/lib/ai-video-agent"
 import { defaultAvatars, type AvatarRecord } from "@/lib/avatars"
+import {
+  assertHasCredits,
+  debitCredits,
+  ensureCreditBalance,
+} from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 import {
-  STARTING_VOICE_CREDITS,
   defaultDeepgramVoices,
   getDefaultVoice,
-  type CreditBalance,
   type VoiceRecord,
   type VoiceType,
 } from "@/lib/voices"
@@ -85,42 +88,6 @@ async function resolveAvatar(
   }
 
   return savedAvatar as AvatarRecord
-}
-
-async function ensureCreditBalance(
-  client: NonNullable<Awaited<ReturnType<typeof getAuthenticatedInsForgeClient>>["client"]>,
-  userId: string
-) {
-  const { data, error } = await client.database
-    .from("user_credits")
-    .select("*")
-    .eq("user_id", userId)
-    .single()
-
-  if (!error && data) return data as CreditBalance
-
-  const { data: created, error: insertError } = await client.database
-    .from("user_credits")
-    .insert({
-      user_id: userId,
-      balance: STARTING_VOICE_CREDITS,
-    })
-    .select("*")
-    .single()
-
-  if (insertError) {
-    const { data: retryData, error: retryError } = await client.database
-      .from("user_credits")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-
-    if (!retryError && retryData) return retryData as CreditBalance
-    throw new Error(insertError.message ?? "Unable to create credit balance.")
-  }
-
-  if (!created) throw new Error("Unable to create credit balance.")
-  return created as CreditBalance
 }
 
 export async function GET(request: Request) {
@@ -310,13 +277,28 @@ export async function POST(request: Request) {
     duration: body.durationSeconds,
     brollStyle: body.brollStyle,
   })
-  const creditRow = await ensureCreditBalance(client, user.id)
-  const currentBalance = Number(creditRow.balance ?? 0)
-
-  if (currentBalance < credits) {
+  try {
+    await assertHasCredits(
+      client,
+      user.id,
+      credits,
+      "Not enough credits for this AI video."
+    )
+  } catch (creditError) {
     return NextResponse.json(
-      { error: "Not enough credits for this AI video." },
-      { status: 402 }
+      {
+        error:
+          creditError instanceof Error
+            ? creditError.message
+            : "Not enough credits for this AI video.",
+      },
+      {
+        status:
+          creditError instanceof Error &&
+          creditError.name === "InsufficientCreditsError"
+            ? 402
+            : 409,
+      }
     )
   }
 
@@ -357,41 +339,6 @@ export async function POST(request: Request) {
     )
   }
 
-  if (credits > 0) {
-    const { data: debitedCredits, error: debitError } = await client.database
-      .from("user_credits")
-      .update({ balance: currentBalance - credits })
-      .eq("user_id", user.id)
-      .eq("balance", currentBalance)
-      .select("*")
-      .single()
-
-    if (debitError || !debitedCredits) {
-      await client.database
-        .from("ai_video_projects")
-        .update({
-          status: "failed",
-          error_message: "Unable to deduct credits. Try again.",
-        })
-        .eq("id", projectId)
-        .eq("user_id", user.id)
-
-      return NextResponse.json(
-        { error: debitError?.message ?? "Unable to deduct credits. Try again." },
-        { status: 409 }
-      )
-    }
-
-    await client.database.from("credit_transactions").insert({
-      id: crypto.randomUUID(),
-      user_id: user.id,
-      amount: -credits,
-      type: "debit",
-      description: `AI Video Agent generation: ${title}`,
-      reference_id: projectId,
-    })
-  }
-
   const handle = await tasks.trigger<typeof generateAiVideoAgentTask>(
     "generate-ai-video-agent",
     {
@@ -415,6 +362,14 @@ export async function POST(request: Request) {
     .eq("id", projectId)
     .eq("user_id", user.id)
 
+  const debitedCredits = await debitCredits({
+    client,
+    userId: user.id,
+    credits,
+    description: `AI Video Agent generation: ${title}`,
+    referenceId: projectId,
+  })
+
   return NextResponse.json({
     project: {
       ...(project as AiVideoProjectRecord),
@@ -424,6 +379,6 @@ export async function POST(request: Request) {
     runId: handle.id,
     publicAccessToken: handle.publicAccessToken,
     credits,
-    balance: currentBalance - credits,
+    balance: debitedCredits.balance,
   })
 }

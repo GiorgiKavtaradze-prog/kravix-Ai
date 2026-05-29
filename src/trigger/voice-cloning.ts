@@ -13,6 +13,7 @@ type CloneVoicePayload = {
   voiceId: string
   userId: string
   sampleUrl: string
+  creditsCharged: number
 }
 
 type GenerateVoiceTtsPayload = {
@@ -107,11 +108,13 @@ async function loadCustomVoice(voiceId: string, userId: string) {
 
 async function refundCredits({
   userId,
-  generationId,
+  referenceId,
+  description,
   credits,
 }: {
   userId: string
-  generationId: string
+  referenceId: string
+  description: string
   credits: number
 }) {
   if (credits <= 0) {
@@ -139,8 +142,8 @@ async function refundCredits({
     user_id: userId,
     amount: credits,
     type: "refund",
-    description: "Voice TTS generation failed",
-    reference_id: generationId,
+    description,
+    reference_id: referenceId,
   })
 }
 
@@ -307,6 +310,12 @@ export const cloneVoiceTask = task({
       metadata.set("error", message)
       await setProgress("failed", 100, message)
       await deleteVoiceClone(payload.voiceId, payload.userId)
+      await refundCredits({
+        userId: payload.userId,
+        referenceId: payload.voiceId,
+        credits: payload.creditsCharged,
+        description: "Voice cloning request failed",
+      })
 
       throw error
     }
@@ -380,8 +389,9 @@ export const generateVoiceTtsTask = task({
       })
       await refundCredits({
         userId: payload.userId,
-        generationId: payload.generationId,
+        referenceId: payload.generationId,
         credits: payload.creditsCharged,
+        description: "Voice TTS generation failed",
       })
 
       throw error
