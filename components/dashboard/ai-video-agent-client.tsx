@@ -54,6 +54,11 @@ import {
 } from "@/lib/ai-video-agent"
 import { getActiveSceneVisualAsset } from "@/lib/ai-video-agent-composition"
 import type { AvatarRecord } from "@/lib/avatars"
+import {
+  AI_VIDEO_AGENT_IMAGE_CREDITS,
+  AI_VIDEO_AGENT_VIDEO_CREDITS,
+  calculateAvatarVideoCredits,
+} from "@/lib/credits"
 import { insforge } from "@/lib/insforge/client"
 import { cn } from "@/lib/utils"
 import type { CreditBalance, DefaultVoice, VoiceRecord, VoiceType } from "@/lib/voices"
@@ -1643,6 +1648,10 @@ export function CreateAiVideoAgentClient() {
       }
 
       if (!response.ok || !data.projectId || !data.runId || !data.publicAccessToken) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start AI video generation.")
       }
 
@@ -1934,8 +1943,27 @@ function aiBrollClipSeconds(scene: AiVideoSceneRecord | null) {
   return sceneDuration(scene) <= 5 ? 5 : 10
 }
 
-function aiBrollClipCredits(scene: AiVideoSceneRecord | null) {
-  return aiBrollClipSeconds(scene) <= 5 ? 5 : 10
+function aiBrollClipCredits() {
+  return AI_VIDEO_AGENT_VIDEO_CREDITS
+}
+
+function sceneAssetCreditCost(
+  mode: "ai_image" | "ai_video" | "stock" | "illustration" | "avatar_video",
+  scene: AiVideoSceneRecord | null
+) {
+  if (mode === "ai_image" || mode === "illustration") {
+    return AI_VIDEO_AGENT_IMAGE_CREDITS
+  }
+
+  if (mode === "ai_video") {
+    return aiBrollClipCredits()
+  }
+
+  if (mode === "avatar_video") {
+    return calculateAvatarVideoCredits(aiBrollClipSeconds(scene))
+  }
+
+  return 0
 }
 
 function SceneThumbnail({
@@ -2154,6 +2182,10 @@ export function EditAiVideoAgentClient({ projectId }: { projectId: string }) {
       }
 
       if (!response.ok || !data.runId || !data.publicAccessToken) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start scene update.")
       }
 
@@ -2165,8 +2197,8 @@ export function EditAiVideoAgentClient({ projectId }: { projectId: string }) {
       toast.loading("Scene update started", {
         id: `scene-asset-${editingScene.id}`,
         description:
-          assetMode === "ai_video"
-            ? `${data.clipSeconds ?? aiBrollClipSeconds(editingScene)}s max AI B-roll. ${data.credits ?? aiBrollClipCredits(editingScene)} credits will be charged.`
+          (data.credits ?? sceneAssetCreditCost(assetMode, editingScene)) > 0
+            ? `${data.credits ?? sceneAssetCreditCost(assetMode, editingScene)} credits will be charged.`
             : "The preview will refresh when the new asset is ready.",
       })
     } catch (submitError) {
@@ -2289,10 +2321,10 @@ export function EditAiVideoAgentClient({ projectId }: { projectId: string }) {
           >
             <div
               className={cn(
-                "overflow-hidden rounded-lg bg-black shadow-sm",
+                "overflow-hidden rounded-lg bg-black shadow-sm relative flex items-center justify-center",
                 project.screen_size === "9:16"
-                  ? "aspect-[9/16] h-full max-h-[66vh] w-auto"
-                  : "aspect-video h-auto max-h-[66vh] w-full max-w-[1180px]"
+                  ? "aspect-[9/16] h-full max-h-full w-auto max-w-full"
+                  : "aspect-video h-full max-h-full w-auto max-w-full"
               )}
             >
               <RemotionPlayerPreview project={project} scenes={scenes} assets={assets} />
@@ -2404,9 +2436,9 @@ export function EditAiVideoAgentClient({ projectId }: { projectId: string }) {
                 className="min-h-32"
                 placeholder="Describe the replacement scene asset..."
               />
-              {assetMode === "ai_video" ? (
+              {sceneAssetCreditCost(assetMode, editingScene) > 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Generates a {aiBrollClipSeconds(editingScene)}s max AI B-roll clip and deducts {aiBrollClipCredits(editingScene)} credits when the job starts. Credits are refunded if generation fails.
+                  This scene update costs {sceneAssetCreditCost(assetMode, editingScene)} credits. Credits are refunded if generation fails.
                 </p>
               ) : null}
               {assetMode === "avatar_video" ? (

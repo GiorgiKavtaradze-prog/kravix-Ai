@@ -2,6 +2,11 @@ import type { editAiVideoSceneAssetTask } from "@/src/trigger/edit-ai-video-agen
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
 
+import {
+  AI_VIDEO_AGENT_IMAGE_CREDITS,
+  AI_VIDEO_AGENT_VIDEO_CREDITS,
+  calculateAvatarVideoCredits,
+} from "@/lib/credits"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
 const sceneAssetModes = ["ai_image", "ai_video", "stock", "illustration", "avatar_video"] as const
@@ -17,8 +22,24 @@ function aiVideoClipSeconds(scene: { start_time?: number; end_time?: number }) {
   return duration <= 5 ? 5 : 10
 }
 
-function aiVideoClipCredits(seconds: number) {
-  return seconds <= 5 ? 5 : 10
+function aiVideoClipCredits() {
+  return AI_VIDEO_AGENT_VIDEO_CREDITS
+}
+
+function sceneAssetCredits(mode: SceneAssetMode, seconds: number) {
+  if (mode === "ai_image" || mode === "illustration") {
+    return AI_VIDEO_AGENT_IMAGE_CREDITS
+  }
+
+  if (mode === "ai_video") {
+    return aiVideoClipCredits()
+  }
+
+  if (mode === "avatar_video") {
+    return calculateAvatarVideoCredits(seconds)
+  }
+
+  return 0
 }
 
 export async function POST(
@@ -62,8 +83,11 @@ export async function POST(
       return NextResponse.json({ error: "AI video scene not found." }, { status: 404 })
     }
 
-    const clipSeconds = body.mode === "ai_video" ? aiVideoClipSeconds(sceneResult.data) : 0
-    const credits = body.mode === "ai_video" ? aiVideoClipCredits(clipSeconds) : 0
+    const clipSeconds =
+      body.mode === "ai_video" || body.mode === "avatar_video"
+        ? aiVideoClipSeconds(sceneResult.data)
+        : 0
+    const credits = sceneAssetCredits(body.mode, clipSeconds)
 
     if (credits > 0) {
       const { data: creditRow, error: creditError } = await client.database

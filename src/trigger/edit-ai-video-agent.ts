@@ -10,6 +10,11 @@ import {
   type RemotionSceneData,
 } from "../../lib/ai-video-agent"
 import { buildAiVideoAgentComposition } from "../../lib/ai-video-agent-composition"
+import {
+  AI_VIDEO_AGENT_IMAGE_CREDITS,
+  AI_VIDEO_AGENT_VIDEO_CREDITS,
+  calculateAvatarVideoCredits,
+} from "../../lib/credits"
 import { createInsForgeServerClient } from "../../lib/insforge/server"
 import { getDefaultVoice } from "../../lib/voices"
 
@@ -162,8 +167,24 @@ function aiVideoClipSeconds(scene: AiVideoSceneRecord) {
   return duration <= 5 ? 5 : 10
 }
 
-function aiVideoClipCredits(seconds: number) {
-  return seconds <= 5 ? 5 : 10
+function aiVideoClipCredits() {
+  return AI_VIDEO_AGENT_VIDEO_CREDITS
+}
+
+function sceneAssetCredits(mode: SceneAssetMode, seconds: number) {
+  if (mode === "ai_image" || mode === "illustration") {
+    return AI_VIDEO_AGENT_IMAGE_CREDITS
+  }
+
+  if (mode === "ai_video") {
+    return aiVideoClipCredits()
+  }
+
+  if (mode === "avatar_video") {
+    return calculateAvatarVideoCredits(seconds)
+  }
+
+  return 0
 }
 
 async function debitCredits({
@@ -369,26 +390,16 @@ async function generateImage(project: AiVideoProjectRecord, scene: AiVideoSceneR
   if (!process.env.GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY in the Trigger.dev environment.")
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-image",
-    contents: [
-      { text: `${prompt}. Create a polished cinematic scene asset. No text, logos, captions, or watermarks.` }
-    ],
+  const response = await ai.models.generateImages({
+    model: "imagen-3.0-generate-002",
+    prompt: `${prompt}. Create a polished cinematic scene asset. No text, logos, captions, or watermarks.`,
     config: {
-      responseModalities: ["IMAGE"],
-      imageConfig: {
-        aspectRatio: project.screen_size,
-        imageSize: "1K",
-      },
+      numberOfImages: 1,
+      outputMimeType: "image/png",
+      aspectRatio: project.screen_size,
     },
   })
-  const imagePart = response.candidates?.[0]?.content?.parts?.find(
-    (part) => "inlineData" in part && part.inlineData?.data
-  )
-  const base64Data =
-    imagePart && "inlineData" in imagePart
-      ? imagePart.inlineData?.data
-      : null
+  const base64Data = response.generatedImages?.[0]?.image?.imageBytes
 
   if (!base64Data) {
     throw new Error("Gemini did not return an image.")
@@ -457,7 +468,7 @@ async function generateVideo(
     metadata: {
       prompt,
       seconds,
-      creditsCharged: aiVideoClipCredits(seconds),
+      creditsCharged: aiVideoClipCredits(),
       model: "wan-video/wan-2.2-t2v-fast",
       editMode: "ai_video",
     },
@@ -765,20 +776,23 @@ export const editAiVideoSceneAssetTask = task({
         payload.userId
       )
       const prompt = payload.prompt || scene.visual_prompt || scene.summary
-      const clipSeconds = payload.mode === "ai_video" ? aiVideoClipSeconds(scene) : 0
+      const clipSeconds =
+        payload.mode === "ai_video" || payload.mode === "avatar_video"
+          ? aiVideoClipSeconds(scene)
+          : 0
+      debitedCredits = sceneAssetCredits(payload.mode, clipSeconds)
 
-      if (payload.mode === "ai_video") {
-        debitedCredits = aiVideoClipCredits(clipSeconds)
+      if (debitedCredits > 0) {
         await setProgress(
           "deducting_credits",
           18,
-          `Deducting ${debitedCredits} credits for a ${clipSeconds}-second AI video clip.`
+          `Deducting ${debitedCredits} credits for this scene asset.`
         )
         await debitCredits({
           userId: project.user_id,
           projectId: project.id,
           credits: debitedCredits,
-          description: `AI Video Agent scene ${scene.scene_index + 1} ${clipSeconds}s B-roll edit`,
+          description: `AI Video Agent scene ${scene.scene_index + 1} asset edit`,
         })
       }
 

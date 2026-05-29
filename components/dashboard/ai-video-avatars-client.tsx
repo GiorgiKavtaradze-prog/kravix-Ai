@@ -1003,6 +1003,10 @@ export function CreateAiVideoAvatarClient() {
       }
 
       if (!response.ok || !data.videoId || !data.runId || !data.publicAccessToken) {
+        if (response.status === 402) {
+          window.location.href = "/dashboard/profile#credits"
+          return
+        }
         throw new Error(data.error ?? "Unable to start avatar video generation.")
       }
 

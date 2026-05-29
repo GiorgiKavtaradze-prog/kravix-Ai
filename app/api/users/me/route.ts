@@ -58,3 +58,57 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ user: data as UserProfile })
 }
+
+export async function PATCH(request: Request) {
+  const { client, user, error } = await getAuthenticatedInsForgeClient(request)
+
+  if (error || !client || !user) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+
+  const body = (await request.json()) as {
+    name?: string | null
+    avatar_url?: string | null
+  }
+  const name = typeof body.name === "string" ? body.name.trim() : null
+  const avatarUrl =
+    typeof body.avatar_url === "string" && body.avatar_url.trim()
+      ? body.avatar_url.trim()
+      : null
+
+  let basePayload: ReturnType<typeof buildUserProfilePayload>
+
+  try {
+    basePayload = buildUserProfilePayload(user)
+  } catch (payloadError) {
+    return NextResponse.json(
+      {
+        error:
+          payloadError instanceof Error
+            ? payloadError.message
+            : "Unable to read user profile.",
+      },
+      { status: 400 }
+    )
+  }
+
+  const { data, error: updateError } = await client.database
+    .from("users")
+    .upsert(
+      {
+        ...basePayload,
+        name,
+        avatar_url: avatarUrl,
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    )
+    .select("*")
+    .single()
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ user: data as UserProfile })
+}

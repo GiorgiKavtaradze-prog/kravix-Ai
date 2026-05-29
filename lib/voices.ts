@@ -58,10 +58,7 @@ export type CreditBalance = {
   updated_at: string
 }
 
-export const STARTING_VOICE_CREDITS = 2480
 export const TTS_MAX_CHARACTERS = 2000
-export const TTS_CREDITS_PER_BLOCK = 10
-export const TTS_CHARACTER_BLOCK_SIZE = 500
 
 export const voicePreviewText =
   "This is your cloned voice preview, ready for stories, agents, and studio projects."
@@ -140,14 +137,6 @@ export const defaultDeepgramVoices: DefaultVoice[] = [
     previewUrl: "https://static.deepgram.com/examples/Aura-2-athena.wav",
   },
 ]
-
-export function calculateTtsCredits(characterCount: number) {
-  if (characterCount <= 0) {
-    return 0
-  }
-
-  return Math.ceil(characterCount / TTS_CHARACTER_BLOCK_SIZE) * TTS_CREDITS_PER_BLOCK
-}
 
 function safeFilename(filename: string, fallback: string) {
   const cleaned = filename
