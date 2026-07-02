@@ -179,9 +179,7 @@ export function ProfileSettingsClient() {
   }
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadProfile(false, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
@@ -193,9 +191,6 @@ export function ProfileSettingsClient() {
     } else if (params.get("checkout") === "cancelled") {
       toast.info("Checkout cancelled")
     }
-    // The profile refresh intentionally reuses the same loader as the rest of
-    // the page after Stripe redirects back.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

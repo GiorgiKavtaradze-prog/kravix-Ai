@@ -200,7 +200,7 @@ function MediaImage({
   className?: string
   objectFit?: "object-cover" | "object-contain"
 }) {
-  // eslint-disable-next-line @next/next/no-img-element
+
   return <img src={mediaSource(src)} alt={alt} className={cn("size-full", objectFit, className)} />
 }
 
@@ -232,10 +232,8 @@ function RemotionCaptionRenderer({
 }) {
   if (!caption) return null
 
-  // Ensure we have a words array
   let words: CaptionWordTiming[] | undefined = caption.words
   if (!words || words.length === 0) {
-    // Synthesize words from text
     const textWords = caption.text ? caption.text.trim().split(/\s+/) : []
     const duration = (caption.end ?? 10) - (caption.start ?? 0)
     const wordDuration = duration / Math.max(1, textWords.length)
@@ -250,10 +248,8 @@ function RemotionCaptionRenderer({
     return <span className="text-5xl md:text-6xl lg:text-7xl font-bold">{caption.text}</span>
   }
 
-  // Find the active word index
   let activeIndex = words.findIndex((w) => currentTime >= w.start && currentTime <= w.end)
   if (activeIndex === -1) {
-    // If none is active, find the closest one
     const nextIndex = words.findIndex((w) => w.start > currentTime)
     if (nextIndex === -1) {
       activeIndex = words.length - 1
@@ -262,7 +258,6 @@ function RemotionCaptionRenderer({
     }
   }
 
-  // Chunk into 3-word groups
   const chunkIndex = Math.floor(activeIndex / 3)
   const startIdx = chunkIndex * 3
   const visibleWords = words.slice(startIdx, startIdx + 3)
@@ -474,7 +469,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
 
   return (
     <AbsoluteFill className="overflow-hidden bg-slate-950 text-white">
-      {/* Hidden preloader to cache all assets and eliminate blank screen flashes during transitions */}
       <div style={{ display: "none" }} aria-hidden="true">
         {assets.map((asset) => {
           if (!asset.url) return null
@@ -505,7 +499,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
         <Audio src={project.voiceover_url} />
       ) : null}
 
-      {/* Intro section: Full-screen Avatar */}
       {isIntro ? (
         <AbsoluteFill className="overflow-hidden bg-slate-950 z-0">
           {activeAvatarAsset?.url && activeAvatarAsset.mime_type?.startsWith("video/") ? (
@@ -527,7 +520,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
             </div>
           ) : (
             <div className="relative size-full overflow-hidden bg-slate-950">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={mediaSource(activeAvatarAsset?.url ?? project.avatar_image_url)}
                 alt=""
@@ -545,11 +537,10 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
         </AbsoluteFill>
       ) : null}
 
-      {/* Main scenes b-roll section (shows past 5 seconds) */}
       {!isIntro && scenes.map((scene) => {
         const sceneStart = Number(scene.start_time)
         const sceneEnd = Number(scene.end_time)
-        if (sceneEnd <= 5) return null // Completely covered by the 5s intro
+        if (sceneEnd <= 5) return null
 
         const adjustedStart = Math.max(5, sceneStart)
         const startFrame = Math.floor(adjustedStart * fps)
@@ -589,7 +580,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
                 </div>
               ) : (
                 <div className="relative size-full overflow-hidden bg-slate-950">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={mediaSource(asset?.url ?? project.avatar_image_url)}
                     alt=""
@@ -609,7 +599,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
         )
       })}
 
-      {/* PIP Avatar (rendered after intro duration) */}
       {showAvatar ? (
         <div
           className={cn(
@@ -638,7 +627,6 @@ function AiVideoRemotionPreview({ project, scenes, assets }: RemotionPreviewProp
             </div>
           ) : (
             <div className="relative size-full overflow-hidden bg-slate-950">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={mediaSource(activeAvatarAsset?.url ?? project.avatar_image_url)}
                 alt=""
@@ -690,7 +678,6 @@ function RemotionPlayerPreview({
   const width = project.screen_size === "16:9" ? 1920 : 1080
   const height = project.screen_size === "16:9" ? 1080 : 1920
 
-  // Calculate actual duration in seconds from the end time of the last scene or the duration_seconds
   const actualDuration = scenes.length > 0
     ? Math.max(...scenes.map((s) => Number(s.end_time)))
     : project.duration_seconds
@@ -761,7 +748,6 @@ function ProjectCard({
       >
         <MediaImage src={project.avatar_image_url} alt={project.title} className="transition duration-300 group-hover:scale-105" />
 
-        {/* Modern Play Overlay on Hover */}
         {!processing && project.status === "completed" && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             <span className="flex size-14 items-center justify-center rounded-full bg-primary/95 text-primary-foreground shadow-lg transition-transform duration-300 hover:scale-110 active:scale-95">
@@ -871,7 +857,6 @@ export function AiVideoAgentClient() {
 
   React.useEffect(() => {
     void refreshProjects()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
@@ -885,7 +870,6 @@ export function AiVideoAgentClient() {
     }, 5000)
 
     return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects])
 
   async function refreshProjects(showSkeleton = true) {
@@ -1210,7 +1194,6 @@ function VoiceSelectCard({
 }
 
 function HighlightedCaption({ style }: { style: AiVideoAgentCaptionStyle }) {
-  // 3 words: "Create amazing videos" with "amazing" highlighted as the speaking word
   switch (style) {
     case "bold_subtitle":
       return (
@@ -1270,15 +1253,12 @@ function CaptionDesignPreview({
 
   return (
     <div className={cn("relative flex aspect-video items-center justify-center overflow-hidden rounded-md border border-white/10 bg-slate-950", compact ? "p-1" : "p-2")}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={bgImage}
         alt="Preview avatar"
         className="absolute inset-0 size-full object-contain opacity-70"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
-
-      {/* Absolute positioning to match a real subtitle look */}
       <div className={cn("absolute flex justify-center text-center", compact ? "inset-x-1 bottom-1" : "inset-x-2 bottom-2")}>
         <span
           className={cn(
@@ -1338,15 +1318,11 @@ function LivePreviewPanel({
             project.screen_size === "9:16" ? "aspect-[9/16] max-h-[620px] w-full" : "aspect-video w-full"
           )}
         >
-          {/* Premium blurred backdrop to eliminate empty margins */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={mediaSource(project.avatar_image_url)}
             alt=""
             className="absolute inset-0 size-full object-cover blur-2xl scale-125 opacity-35 select-none pointer-events-none"
           />
-
-          {/* Main Avatar image focused and fitted */}
           <MediaImage
             src={project.avatar_image_url}
             alt={project.avatar_name}
@@ -1355,8 +1331,6 @@ function LivePreviewPanel({
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 z-10" />
-
-          {/* Subtitle Overlay (always shown with HighlightedCaption style inside create page) */}
           <div className="absolute inset-x-[6%] bottom-[8%] flex justify-center text-center z-20">
             <span
               className={cn(
@@ -1482,7 +1456,6 @@ export function CreateAiVideoAgentClient() {
     return () => {
       previewAudioRef.current?.pause()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
@@ -1493,7 +1466,6 @@ export function CreateAiVideoAgentClient() {
     if (!activeRun || (!run?.isSuccess && !run?.isFailed)) return
 
     void loadProjectDetails(activeRun.id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRun?.id, run?.isFailed, run?.isSuccess])
 
   async function refreshData() {
@@ -2294,10 +2266,10 @@ export function EditAiVideoAgentClient({ projectId }: { projectId: string }) {
                     setProject((current) =>
                       current
                         ? {
-                            ...current,
-                            caption_style: style,
-                            captions: current.captions?.map((caption) => ({ ...caption, style })) ?? null,
-                          }
+                          ...current,
+                          caption_style: style,
+                          captions: current.captions?.map((caption) => ({ ...caption, style })) ?? null,
+                        }
                         : current
                     )
                   }}
