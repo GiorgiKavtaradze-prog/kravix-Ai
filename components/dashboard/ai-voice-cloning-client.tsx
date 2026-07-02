@@ -128,8 +128,8 @@ function useAuthHeaders() {
       "X-Insforge-User-Id": data.user.id,
       ...(data.user.email
         ? {
-            "X-Insforge-User-Email": data.user.email,
-          }
+          "X-Insforge-User-Email": data.user.email,
+        }
         : {}),
     }
   }, [])
@@ -204,9 +204,9 @@ async function convertAudioFileToWav(file: File) {
     window.AudioContext ??
     (
       window as Window &
-        typeof globalThis & {
-          webkitAudioContext?: typeof AudioContext
-        }
+      typeof globalThis & {
+        webkitAudioContext?: typeof AudioContext
+      }
     ).webkitAudioContext
 
   if (!AudioContextClass) {
@@ -559,7 +559,6 @@ export function AiVoiceCloningClient() {
     return () => {
       previewAudioRef.current?.pause()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
@@ -1101,9 +1100,9 @@ export function AiVoiceCloningClient() {
                     selectedVoice ??
                     (allVoiceOptions[0]
                       ? {
-                          id: allVoiceOptions[0].id,
-                          type: allVoiceOptions[0].type,
-                        }
+                        id: allVoiceOptions[0].id,
+                        type: allVoiceOptions[0].type,
+                      }
                       : null)
                   setTtsVoiceValue(
                     preferred ? `${preferred.type}:${preferred.id}` : ""
@@ -1141,7 +1140,7 @@ export function AiVoiceCloningClient() {
                         </p>
                       </div>
                       {generation.status === "generating" ||
-                      generation.status === "queued" ? (
+                        generation.status === "queued" ? (
                         <Loader2Icon className="size-5 animate-spin text-primary" />
                       ) : null}
                     </div>
@@ -1323,7 +1322,7 @@ export function AiVoiceCloningClient() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <Label htmlFor="tts-text">Text</Label>
-              <span
+                <span
                   className={cn(
                     "text-xs tabular-nums text-muted-foreground",
                     ttsCharacterCount > TTS_MAX_CHARACTERS && "text-destructive"

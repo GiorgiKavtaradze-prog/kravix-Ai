@@ -26,14 +26,12 @@ export function getActiveSceneVisualAsset(
 
   if (sceneAssets.length === 0) return undefined
 
-  // Prefer non-avatar_clip assets for the main background/scene asset if they exist
   const brollAsset = sceneAssets
     .filter((asset) => asset.asset_type !== "avatar_clip")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
 
   if (brollAsset) return brollAsset
 
-  // Fall back to avatar_clip if no B-roll asset exists
   return sceneAssets.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
 }
 

@@ -92,7 +92,6 @@ async function fetchSourceImage(url: string) {
 
   let contentType = response.headers.get("content-type") ?? ""
 
-  // Fallback if content-type is missing, generic, or not an image type
   if (
     !contentType ||
     contentType === "binary/octet-stream" ||
@@ -110,7 +109,7 @@ async function fetchSourceImage(url: string) {
     } else if (extension === "gif") {
       contentType = "image/gif"
     } else {
-      contentType = "image/png" // Safe fallback
+      contentType = "image/png"
     }
   }
 

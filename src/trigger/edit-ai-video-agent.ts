@@ -496,7 +496,6 @@ async function fetchStock(project: AiVideoProjectRecord, scene: AiVideoSceneReco
   let mimeType = "video/mp4"
 
   if (!mediaUrl) {
-    // Fallback to stock image search
     const imgUrl = new URL("https://pixabay.com/api/")
     imgUrl.searchParams.set("key", process.env.PIXABAY_API_KEY)
     imgUrl.searchParams.set("q", prompt || scene.stock_keyword || scene.title)

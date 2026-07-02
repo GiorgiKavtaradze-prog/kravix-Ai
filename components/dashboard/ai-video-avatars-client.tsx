@@ -126,8 +126,8 @@ function useAuthHeaders() {
       "X-Insforge-User-Id": data.user.id,
       ...(data.user.email
         ? {
-            "X-Insforge-User-Email": data.user.email,
-          }
+          "X-Insforge-User-Email": data.user.email,
+        }
         : {}),
     }
   }, [])
@@ -146,7 +146,6 @@ function MediaImage({
   alt: string
   className?: string
 }) {
-  // eslint-disable-next-line @next/next/no-img-element
   return <img src={mediaSource(src)} alt={alt} className={cn("size-full object-cover", className)} />
 }
 
@@ -401,7 +400,6 @@ export function AiVideoAvatarsClient() {
 
   React.useEffect(() => {
     void refreshVideos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function refreshVideos(showSkeleton = true) {
@@ -833,7 +831,6 @@ export function CreateAiVideoAvatarClient() {
     return () => {
       previewAudioRef.current?.pause()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
@@ -894,7 +891,6 @@ export function CreateAiVideoAvatarClient() {
       const video = data?.videos.find((item) => item.id === activeRun.id) ?? null
       setCompletedVideo(video)
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRun?.id, run?.isFailed, run?.isSuccess])
 
   function togglePlayPreview(voiceId: string, url?: string | null) {

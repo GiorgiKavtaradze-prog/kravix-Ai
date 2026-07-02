@@ -295,20 +295,16 @@ function parseTimeToSeconds(timeVal: unknown): number {
   }
 
   const clean = timeVal.trim()
-  // Check if it's already just a number string e.g. "5.5"
   if (/^\d+(\.\d+)?$/.test(clean)) {
     return parseFloat(clean)
   }
 
-  // Check for HH:MM:SS or MM:SS format
   const parts = clean.split(":")
   if (parts.length === 2) {
-    // MM:SS or MM:SS.ms
     const mins = parseFloat(parts[0]) || 0
     const secs = parseFloat(parts[1]) || 0
     return mins * 60 + secs
   } else if (parts.length === 3) {
-    // HH:MM:SS or HH:MM:SS.ms
     const hrs = parseFloat(parts[0]) || 0
     const mins = parseFloat(parts[1]) || 0
     const secs = parseFloat(parts[2]) || 0
@@ -745,7 +741,6 @@ async function transcribeCaptions({
     let utterances = data.results?.utterances ?? []
     const allTranscribedWords = data.results?.channels?.[0]?.alternatives?.[0]?.words ?? []
 
-    // Safeguard: Synthesize utterances from the main words array if 'utterances' is empty
     if (!utterances.length && allTranscribedWords.length > 0) {
       const synthesized: Array<{
         transcript?: string
@@ -785,7 +780,6 @@ async function transcribeCaptions({
       const uStart = utterance.start ?? 0
       const uEnd = utterance.end ?? 0
 
-      // Filter words for this utterance from the complete list of words if utterance.words is missing
       const rawWords = utterance.words ?? allTranscribedWords.filter(
         (word) => typeof word.start === "number" && typeof word.end === "number" && word.start >= uStart - 0.05 && word.end <= uEnd + 0.05
       )
@@ -892,7 +886,6 @@ async function fetchStockBroll(project: AiVideoProjectRecord, scene: AiVideoScen
     let mimeType = "video/mp4"
 
     if (!mediaUrl) {
-      // Fallback to stock image search
       const imgUrl = new URL("https://pixabay.com/api/")
       imgUrl.searchParams.set("key", process.env.PIXABAY_API_KEY)
       imgUrl.searchParams.set("q", scene.stock_keyword ?? scene.title)
@@ -1302,18 +1295,14 @@ export const generateAiVideoAgentTask = task({
       await setDbStage(payload.projectId, payload.userId, "generating_captions", 64, "Generating accurate captions.")
       const captions = await transcribeCaptions({ project, voiceoverUrl, scenes })
 
-      // Align scene timings to the transcribed words
       const allWords: Array<{ word: string; start: number; end: number }> = []
       for (const cue of captions) {
         if (cue.words) {
           allWords.push(...cue.words)
         }
       }
-
-      // Split the entire script into original words
       const originalWords = script.split(/\s+/).filter(Boolean)
 
-      // Align original words sequentially to the transcribed timings (1-to-1 sequential mapping)
       const timedWords = originalWords.map((word, idx) => {
         const matchingTranscribed = allWords[idx]
         if (matchingTranscribed) {
@@ -1324,7 +1313,6 @@ export const generateAiVideoAgentTask = task({
           }
         }
 
-        // Extrapolate timing smoothly if Deepgram missed a word or ended early
         const prevWord = idx > 0 ? allWords[idx - 1] : null
         const start = prevWord ? prevWord.end + 0.05 : idx * 0.3
         const end = start + 0.3
@@ -1335,7 +1323,6 @@ export const generateAiVideoAgentTask = task({
         }
       })
 
-      // Align scene timings to the mapped words (completely eliminating gaps and overlaps)
       let currentWordIdx = 0
       const alignedScenes = scenes.map((scene, index) => {
         const sceneWordCount = (scene.voiceover_segment || scene.caption_text || "")
@@ -1345,9 +1332,8 @@ export const generateAiVideoAgentTask = task({
         const sceneWords = timedWords.slice(currentWordIdx, currentWordIdx + sceneWordCount)
         currentWordIdx += sceneWordCount
 
-        // Set startTime of scene
         const startTime = index === 0 ? 0 : (sceneWords[0]?.start ?? Number(scene.start_time))
-        // Set endTime of scene
+
         const endTime = sceneWords[sceneWords.length - 1]?.end ?? Number(scene.end_time)
 
         return {
@@ -1357,12 +1343,10 @@ export const generateAiVideoAgentTask = task({
         }
       })
 
-      // Make scene timings perfectly contiguous so there are zero flickers or black screens
       for (let i = 0; i < alignedScenes.length - 1; i++) {
         alignedScenes[i].end_time = alignedScenes[i + 1].start_time
       }
 
-      // Save aligned scene times in the database
       const clientForSync = createInsForgeServerClient()
       for (const updatedScene of alignedScenes) {
         await clientForSync.database
@@ -1374,7 +1358,6 @@ export const generateAiVideoAgentTask = task({
           .eq("id", updatedScene.id)
       }
 
-      // Generate accurate, chunked caption cues (groups of 5 words) for natural reading pacing
       const finalCaptions: CaptionCue[] = []
       currentWordIdx = 0
       alignedScenes.forEach((scene) => {
@@ -1385,7 +1368,6 @@ export const generateAiVideoAgentTask = task({
         const sceneWords = timedWords.slice(currentWordIdx, currentWordIdx + sceneWordCount)
         currentWordIdx += sceneWordCount
 
-        // Chunk words in groups of 5
         const chunkSize = 5
         for (let i = 0; i < sceneWords.length; i += chunkSize) {
           const chunk = sceneWords.slice(i, i + chunkSize)
@@ -1401,7 +1383,6 @@ export const generateAiVideoAgentTask = task({
         }
       })
 
-      // Save final, aligned captions
       await saveJsonAsset({
         project,
         filename: "captions.json",

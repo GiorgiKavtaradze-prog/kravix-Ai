@@ -78,7 +78,6 @@ function AvatarImage({
     return <Image src={src} alt={alt} fill sizes="320px" className={className} />
   }
 
-  // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt={alt} className={cn("size-full", className)} />
 }
 
@@ -105,7 +104,6 @@ function CustomAvatarCard({
     <article className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       {isCompletedAi ? (
         <div className="relative flex justify-center items-center gap-2 h-44 bg-muted/30 p-3 border-b border-border">
-          {/* 16:9 Landscape variant */}
           <div className="relative flex-1 overflow-hidden rounded-lg bg-black/5 aspect-[16/9] shadow-sm self-center">
             <AvatarImage
               src={avatar.image_16_9_url!}
@@ -116,7 +114,6 @@ function CustomAvatarCard({
               16:9
             </Badge>
           </div>
-          {/* 9:16 Portrait variant */}
           <div className="relative overflow-hidden rounded-lg bg-black/5 aspect-[9/16] h-full shadow-sm self-center">
             <AvatarImage
               src={avatar.image_9_16_url!}
@@ -359,9 +356,6 @@ export function AiAvatarsClient({
     void refreshAvatars().catch(() => {
       setAvatars(initialAvatars)
     })
-    // Initial avatars are a server fallback; authenticated client state is the
-    // source of truth once the InsForge session is available in the browser.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function refreshAvatars() {
@@ -375,9 +369,9 @@ export function AiAvatarsClient({
 
       const [avatarsResult, creditResponse] = await Promise.all([
         insforge.database
-        .from("avatars")
-        .select("*")
-        .eq("user_id", authData.user.id)
+          .from("avatars")
+          .select("*")
+          .eq("user_id", authData.user.id)
           .order("created_at", { ascending: false }),
         fetch("/api/credits", { headers: await getInsforgeAuthHeaders() }),
       ])
@@ -699,13 +693,11 @@ export function AiAvatarsClient({
                 onClick={() => {
                   localStorage.clear()
                   sessionStorage.clear()
-                  // Clear cookies as well
                   document.cookie.split(";").forEach((cookie) => {
                     const eqPos = cookie.indexOf("=")
                     const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
                     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
                   })
-                  // Redirect to create fresh user on new DB
                   window.location.href = "/sign-up"
                 }}
               >
@@ -808,7 +800,6 @@ export function AiAvatarsClient({
                 <label className="group relative flex min-h-52 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background p-5 text-center transition hover:bg-muted/50">
                   {uploadedPreviewUrl ? (
                     <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={uploadedPreviewUrl}
                         alt="Uploaded avatar preview"
