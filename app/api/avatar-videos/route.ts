@@ -1,7 +1,6 @@
 import type { generateAvatarVideoTask } from "@/src/trigger/generate-avatar-video"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import {
   AVATAR_VIDEO_MAX_SCRIPT_CHARACTERS,
   calculateAvatarVideoCredits,

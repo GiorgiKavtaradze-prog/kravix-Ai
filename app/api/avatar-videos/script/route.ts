@@ -1,6 +1,5 @@
 import { GoogleGenAI } from "@google/genai"
 import { NextResponse } from "next/server"
-
 import {
   AVATAR_VIDEO_MAX_SCRIPT_CHARACTERS,
   isScriptTone,

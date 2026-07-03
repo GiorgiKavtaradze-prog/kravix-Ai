@@ -3,7 +3,6 @@
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
-
 import { insforge } from "@/lib/insforge/client"
 import { syncCurrentUserProfile } from "@/lib/insforge/sync-user-profile"
 

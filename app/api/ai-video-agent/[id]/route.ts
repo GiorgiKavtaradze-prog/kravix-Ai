@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-
 import {
   isAiVideoAgentCaptionStyle,
   type AiVideoAssetRecord,

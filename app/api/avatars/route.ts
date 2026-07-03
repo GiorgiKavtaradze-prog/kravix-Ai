@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-
 import type { AvatarRecord } from "@/lib/avatars"
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 

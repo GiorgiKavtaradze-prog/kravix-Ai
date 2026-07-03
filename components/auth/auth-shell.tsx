@@ -1,8 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
-
 import { ThemeToggle } from "@/components/theme-toggle"
-
 export function AuthShell({
   children,
   eyebrow,

@@ -4,18 +4,14 @@ export const avatarStyles = [
   "3D Cartoon",
   "Stylized",
 ] as const
-
 export type AvatarStyle = (typeof avatarStyles)[number]
-
 export type AvatarSource = "default" | "upload" | "ai"
-
 export type AvatarStatus =
   | "ready"
   | "queued"
   | "generating"
   | "completed"
   | "failed"
-
 export type AvatarRecord = {
   id: string
   user_id: string
@@ -31,7 +27,6 @@ export type AvatarRecord = {
   created_at: string
   updated_at: string
 }
-
 export type DefaultAvatar = {
   id: string
   name: string
@@ -39,7 +34,6 @@ export type DefaultAvatar = {
   image: string
   description: string
 }
-
 export const defaultAvatars: DefaultAvatar[] = [
   {
     id: "emma",
@@ -70,7 +64,6 @@ export const defaultAvatars: DefaultAvatar[] = [
     description: "Polished brand persona with a modern editorial look.",
   },
 ]
-
 export function buildAvatarObjectKey(
   userId: string,
   avatarId: string,
@@ -80,6 +73,5 @@ export function buildAvatarObjectKey(
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "")
-
   return `${userId}/${avatarId}/${safeFilename || "avatar.png"}`
 }

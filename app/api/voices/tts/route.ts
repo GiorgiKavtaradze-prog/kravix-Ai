@@ -1,7 +1,6 @@
 import type { generateVoiceTtsTask } from "@/src/trigger/voice-cloning"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import {
   TTS_MAX_CHARACTERS,
   getDefaultVoice,

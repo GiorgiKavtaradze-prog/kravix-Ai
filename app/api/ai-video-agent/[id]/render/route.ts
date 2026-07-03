@@ -1,7 +1,6 @@
 import type { renderAiVideoAgentTask } from "@/src/trigger/render-ai-video-agent"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 
 export async function POST(

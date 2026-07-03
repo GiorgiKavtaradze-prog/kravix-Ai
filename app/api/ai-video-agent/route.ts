@@ -1,7 +1,6 @@
 import type { generateAiVideoAgentTask } from "@/src/trigger/generate-ai-video-agent"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import {
   AI_VIDEO_AGENT_MAX_SCRIPT_CHARACTERS,
   calculateAiVideoAgentCredits,

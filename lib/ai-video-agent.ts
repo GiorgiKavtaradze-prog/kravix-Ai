@@ -4,7 +4,6 @@ import {
   AI_VIDEO_AGENT_VIDEO_CREDITS,
 } from "@/lib/credits"
 import type { VoiceType } from "@/lib/voices"
-
 export type AiVideoAgentStatus =
   | "queued"
   | "preparing"
@@ -13,7 +12,6 @@ export type AiVideoAgentStatus =
   | "rendering"
   | "completed"
   | "failed"
-
 export type AiVideoAgentDuration = 30 | 60 | 90 | 120
 export type AiVideoAgentScreenSize = "16:9" | "9:16"
 export type AiVideoAgentScriptMode = "manual" | "topic"
@@ -22,7 +20,6 @@ export type AiVideoAgentBrollStyle =
   | "stock"
   | "ai_video"
   | "illustration_animation"
-
 export type AiVideoAgentCaptionStyle =
   | "bold_subtitle"
   | "minimal_clean"
@@ -30,7 +27,6 @@ export type AiVideoAgentCaptionStyle =
   | "tiktok_viral"
   | "gradient_highlight"
   | "word_by_word"
-
 export type AiVideoAgentAssetType =
   | "avatar_clip"
   | "broll_image"
@@ -41,13 +37,11 @@ export type AiVideoAgentAssetType =
   | "composition"
   | "remotion_component"
   | "final_render"
-
 export type CaptionWordTiming = {
   word: string
   start: number
   end: number
 }
-
 export type CaptionCue = {
   text: string
   start: number
@@ -55,7 +49,6 @@ export type CaptionCue = {
   style: AiVideoAgentCaptionStyle
   words?: CaptionWordTiming[]
 }
-
 export type RemotionSceneData = {
   layout: "avatar_intro" | "broll_focus" | "split_avatar" | "illustration"
   transition: "cut" | "fade" | "slide" | "zoom"
@@ -63,7 +56,6 @@ export type RemotionSceneData = {
   visualDirection: string
   accentColor: string
 }
-
 export type AiVideoSceneRecord = {
   id: string
   project_id: string
@@ -82,7 +74,6 @@ export type AiVideoSceneRecord = {
   created_at: string
   updated_at: string
 }
-
 export type AiVideoAssetRecord = {
   id: string
   project_id: string
@@ -96,7 +87,6 @@ export type AiVideoAssetRecord = {
   created_at: string
   updated_at: string
 }
-
 export type AiVideoProjectRecord = {
   id: string
   user_id: string
@@ -131,12 +121,10 @@ export type AiVideoProjectRecord = {
   created_at: string
   updated_at: string
 }
-
 export type AiVideoProjectWithRelations = AiVideoProjectRecord & {
   scenes: AiVideoSceneRecord[]
   assets: AiVideoAssetRecord[]
 }
-
 export const aiVideoAgentDurations = [30, 60, 90, 120] as const
 export const aiVideoAgentScreenSizes = ["16:9", "9:16"] as const
 export const aiVideoAgentScriptModes = ["manual", "topic"] as const
@@ -154,22 +142,18 @@ export const aiVideoAgentCaptionStyles = [
   "gradient_highlight",
   "word_by_word",
 ] as const
-
 export const aiVideoAgentSceneCounts: Record<AiVideoAgentDuration, number> = {
   30: 4,
   60: 6,
   90: 9,
   120: 12,
 }
-
 export const AI_VIDEO_AGENT_MAX_SCRIPT_CHARACTERS = 8000
-
 export function isAiVideoAgentDuration(
   value: unknown
 ): value is AiVideoAgentDuration {
   return aiVideoAgentDurations.includes(Number(value) as AiVideoAgentDuration)
 }
-
 export function isAiVideoAgentScreenSize(
   value: unknown
 ): value is AiVideoAgentScreenSize {
@@ -178,7 +162,6 @@ export function isAiVideoAgentScreenSize(
     aiVideoAgentScreenSizes.includes(value as AiVideoAgentScreenSize)
   )
 }
-
 export function isAiVideoAgentBrollStyle(
   value: unknown
 ): value is AiVideoAgentBrollStyle {
@@ -187,7 +170,6 @@ export function isAiVideoAgentBrollStyle(
     aiVideoAgentBrollStyles.includes(value as AiVideoAgentBrollStyle)
   )
 }
-
 export function isAiVideoAgentCaptionStyle(
   value: unknown
 ): value is AiVideoAgentCaptionStyle {
@@ -196,7 +178,6 @@ export function isAiVideoAgentCaptionStyle(
     aiVideoAgentCaptionStyles.includes(value as AiVideoAgentCaptionStyle)
   )
 }
-
 export function calculateAiVideoAgentCredits({
   duration,
   brollStyle,
@@ -205,30 +186,23 @@ export function calculateAiVideoAgentCredits({
   brollStyle: AiVideoAgentBrollStyle
 }) {
   const scenes = aiVideoAgentSceneCounts[duration]
-
   if (brollStyle === "stock") {
     return 0
   }
-
   if (brollStyle === "ai_images") {
     return scenes * AI_VIDEO_AGENT_IMAGE_CREDITS
   }
-
   if (brollStyle === "ai_video") {
     return scenes * AI_VIDEO_AGENT_VIDEO_CREDITS
   }
-
   return scenes * AI_VIDEO_AGENT_IMAGE_CREDITS
 }
-
 export function formatAiVideoDuration(duration: number) {
   return duration < 60 ? `${duration}s` : `${Math.round(duration / 60)} min`
 }
-
 export function formatAiVideoScreenSize(screenSize: AiVideoAgentScreenSize) {
   return screenSize === "16:9" ? "16:9 Landscape" : "9:16 Vertical"
 }
-
 export function formatAiVideoBrollStyle(style: AiVideoAgentBrollStyle) {
   const labels: Record<AiVideoAgentBrollStyle, string> = {
     ai_images: "AI Generated Images",
@@ -236,10 +210,8 @@ export function formatAiVideoBrollStyle(style: AiVideoAgentBrollStyle) {
     ai_video: "AI Generated Video",
     illustration_animation: "AI Illustration Animation",
   }
-
   return labels[style]
 }
-
 export function formatAiVideoCaptionStyle(style: AiVideoAgentCaptionStyle) {
   const labels: Record<AiVideoAgentCaptionStyle, string> = {
     bold_subtitle: "Bold subtitle",
@@ -249,10 +221,8 @@ export function formatAiVideoCaptionStyle(style: AiVideoAgentCaptionStyle) {
     gradient_highlight: "Gradient highlight",
     word_by_word: "Word-by-word",
   }
-
   return labels[style]
 }
-
 export function getAvatarImageForAiVideo(
   avatar: Pick<
     AvatarRecord,
@@ -263,19 +233,15 @@ export function getAvatarImageForAiVideo(
   if (screenSize === "9:16") {
     return avatar.image_9_16_url ?? avatar.image_16_9_url ?? avatar.source_image_url
   }
-
   return avatar.image_16_9_url ?? avatar.image_9_16_url ?? avatar.source_image_url
 }
-
 function safeFilename(filename: string, fallback: string) {
   const cleaned = filename
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "")
-
   return cleaned || fallback
 }
-
 export function buildAiVideoAgentObjectKey(
   userId: string,
   projectId: string,

@@ -1,7 +1,6 @@
 import type { editAiVideoSceneAssetTask } from "@/src/trigger/edit-ai-video-agent"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import {
   AI_VIDEO_AGENT_IMAGE_CREDITS,
   AI_VIDEO_AGENT_VIDEO_CREDITS,

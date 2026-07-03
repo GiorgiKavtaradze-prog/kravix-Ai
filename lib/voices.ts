@@ -1,9 +1,6 @@
 export type VoiceType = "custom" | "default"
-
 export type VoiceCloneStatus = "queued" | "cloning" | "completed" | "failed"
-
 export type TtsGenerationStatus = "queued" | "generating" | "completed" | "failed"
-
 export type VoiceRecord = {
   id: string
   user_id: string
@@ -19,7 +16,6 @@ export type VoiceRecord = {
   created_at: string
   updated_at: string
 }
-
 export type DefaultVoice = {
   id: string
   name: string
@@ -32,7 +28,6 @@ export type DefaultVoice = {
   previewText: string
   previewUrl: string
 }
-
 export type TtsGenerationRecord = {
   id: string
   user_id: string
@@ -50,19 +45,15 @@ export type TtsGenerationRecord = {
   created_at: string
   updated_at: string
 }
-
 export type CreditBalance = {
   user_id: string
   balance: number
   created_at: string
   updated_at: string
 }
-
 export const TTS_MAX_CHARACTERS = 2000
-
 export const voicePreviewText =
   "This is your cloned voice preview, ready for stories, agents, and studio projects."
-
 export const defaultDeepgramVoices: DefaultVoice[] = [
   {
     id: "deepgram-thalia",
@@ -137,7 +128,6 @@ export const defaultDeepgramVoices: DefaultVoice[] = [
     previewUrl: "https://static.deepgram.com/examples/Aura-2-athena.wav",
   },
 ]
-
 function safeFilename(filename: string, fallback: string) {
   const cleaned = filename
     .toLowerCase()
@@ -146,7 +136,6 @@ function safeFilename(filename: string, fallback: string) {
 
   return cleaned || fallback
 }
-
 export function buildVoiceSampleObjectKey(
   userId: string,
   voiceId: string,
@@ -154,7 +143,6 @@ export function buildVoiceSampleObjectKey(
 ) {
   return `${userId}/voices/${voiceId}/samples/${safeFilename(filename, "sample.wav")}`
 }
-
 export function buildVoicePreviewObjectKey(
   userId: string,
   voiceId: string,
@@ -162,7 +150,6 @@ export function buildVoicePreviewObjectKey(
 ) {
   return `${userId}/voices/${voiceId}/previews/${safeFilename(filename, "preview.wav")}`
 }
-
 export function buildTtsAudioObjectKey(
   userId: string,
   generationId: string,
@@ -170,7 +157,6 @@ export function buildTtsAudioObjectKey(
 ) {
   return `${userId}/voices/tts/${generationId}/${safeFilename(filename, "speech.wav")}`
 }
-
 export function getDefaultVoice(voiceId: string) {
   return defaultDeepgramVoices.find((voice) => voice.id === voiceId)
 }
