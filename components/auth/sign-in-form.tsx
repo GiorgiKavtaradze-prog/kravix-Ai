@@ -5,7 +5,6 @@ import { AlertCircleIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import * as React from "react"
 import { useForm } from "react-hook-form"
-
 import { GoogleOAuthButton } from "@/components/auth/oauth-button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"

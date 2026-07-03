@@ -1,7 +1,6 @@
 import type { generateAvatarTask } from "@/src/trigger/generate-avatar"
 import { tasks } from "@trigger.dev/sdk"
 import { NextResponse } from "next/server"
-
 import { avatarStyles, type AvatarStyle } from "@/lib/avatars"
 import {
   AVATAR_GENERATION_CREDITS,

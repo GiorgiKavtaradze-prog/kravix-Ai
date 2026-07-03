@@ -5,13 +5,10 @@ import type {
   CaptionCue,
   RemotionSceneData,
 } from "@/lib/ai-video-agent"
-
 const visualAssetTypes = ["broll_image", "broll_video", "ai_video", "remotion_component", "avatar_clip"]
-
 function assetIsSuperseded(asset: AiVideoAssetRecord) {
   return Boolean((asset.metadata as { superseded?: boolean } | null)?.superseded)
 }
-
 export function getActiveSceneVisualAsset(
   assets: AiVideoAssetRecord[],
   sceneId: string | null | undefined
@@ -23,25 +20,18 @@ export function getActiveSceneVisualAsset(
       (asset.url || asset.asset_type === "remotion_component") &&
       !assetIsSuperseded(asset)
   )
-
   if (sceneAssets.length === 0) return undefined
-
   const brollAsset = sceneAssets
     .filter((asset) => asset.asset_type !== "avatar_clip")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-
   if (brollAsset) return brollAsset
-
   return sceneAssets.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
 }
-
 export function getActiveCompositionAssets(assets: AiVideoAssetRecord[]) {
   const activeByScene = new Map<string, AiVideoAssetRecord>()
   const passthrough: AiVideoAssetRecord[] = []
-
   for (const asset of assets) {
     if (assetIsSuperseded(asset)) continue
-
     if (asset.scene_id && visualAssetTypes.includes(asset.asset_type)) {
       const current = activeByScene.get(asset.scene_id)
       if (!current || new Date(asset.created_at).getTime() > new Date(current.created_at).getTime()) {
@@ -49,15 +39,12 @@ export function getActiveCompositionAssets(assets: AiVideoAssetRecord[]) {
       }
       continue
     }
-
     passthrough.push(asset)
   }
-
   return [...passthrough, ...activeByScene.values()].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   )
 }
-
 export function buildAiVideoAgentComposition({
   project,
   scenes,
@@ -77,7 +64,6 @@ export function buildAiVideoAgentComposition({
   const lastCaptionEnd = Math.max(...styledCaptions.map((caption) => caption.end), 0)
   const lastSceneEnd = Math.max(...scenes.map((scene) => Number(scene.end_time)), 0)
   const durationSeconds = Math.max(1, lastCaptionEnd, lastSceneEnd, project.duration_seconds)
-
   return {
     id: project.id,
     title: project.title,
@@ -115,5 +101,4 @@ export function buildAiVideoAgentComposition({
     })),
   }
 }
-
 export type AiVideoAgentCompositionData = ReturnType<typeof buildAiVideoAgentComposition>

@@ -12,7 +12,6 @@ export type UserProfile = {
   created_at: string
   updated_at: string
 }
-
 type AuthUser = {
   id?: string
   email?: string
@@ -31,36 +30,29 @@ type AuthUser = {
   user_metadata?: Record<string, unknown> | null
   metadata?: Record<string, unknown> | null
 }
-
 function stringFromMetadata(
   metadata: Record<string, unknown>,
   keys: string[]
 ) {
   for (const key of keys) {
     const value = metadata[key]
-
     if (typeof value === "string" && value.trim()) {
       return value
     }
   }
-
   return null
 }
-
 export function buildUserProfilePayload(user: AuthUser) {
   const metadata = user.user_metadata ?? user.metadata ?? {}
   const email = user.email
-
   if (!user.id || !email) {
     throw new Error("Authenticated user is missing an id or email.")
   }
-
   const providerList = Array.isArray(user.providers)
     ? user.providers
     : user.provider
       ? [user.provider]
       : []
-
   return {
     id: user.id,
     email,

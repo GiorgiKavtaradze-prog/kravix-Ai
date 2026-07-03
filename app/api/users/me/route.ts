@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-
 import { getAuthenticatedInsForgeClient } from "@/lib/insforge/request-auth"
 import { buildUserProfilePayload, type UserProfile } from "@/lib/users"
 

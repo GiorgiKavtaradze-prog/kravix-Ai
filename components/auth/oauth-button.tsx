@@ -2,7 +2,6 @@
 
 import { Loader2Icon } from "lucide-react"
 import * as React from "react"
-
 import { Button } from "@/components/ui/button"
 import { insforge } from "@/lib/insforge/client"
 
